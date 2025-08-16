@@ -21,10 +21,7 @@
 </template>
 
 <script>
-import { mapState, mapMutations } from 'vuex';
-// #ifdef MP-WEIXIN
-import { onLogin } from '@/config/login';
-// #endif
+import { judgeLogin } from '@/config/login';
 export default {
 	data() {
 		return {
@@ -34,23 +31,22 @@ export default {
 			bannerList: [1, 1, 1, 1]
 		};
 	},
-	computed: {
-		...mapState(['userInfo'])
-	},
+	
 	//第一次加载
 	onLoad(e) {
-		// #ifdef MP-WEIXIN
-		onLogin(() => {
-			// this.getCoupon();
+		judgeLogin((userInfo, error) => {
+			if (userInfo) {
+				console.log('用户已登录:', userInfo);
+			} else {
+				console.log('未登录，已跳转到登录页面:', error);
+			}
 		});
-		// #endif
 	},
 	//页面显示
 	onShow() {
 	},
 	//方法
 	methods: {
-		...mapMutations(['setWebViewUrl']),
 		pageData() { },
 		onPageJump(url) {
 			uni.navigateTo({

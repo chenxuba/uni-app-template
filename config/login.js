@@ -139,6 +139,7 @@ function phoneLogin(phoneDetail, callback) {
                         console.log(res);
                         
 						loginStart = true;
+                        uni.setStorageSync("userInfo", res);
 						store.commit('setUserInfo', res);
 						callback && callback(res);
 						uni.showToast({
