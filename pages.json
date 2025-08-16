@@ -70,7 +70,7 @@
         "pagePath": "pages/shopCar/shopCar",
         "iconPath": "static/icon/tab/icon_wode.png",
         "selectedIconPath": "static/icon/tab/icon_wode_c.png",
-        "text": "购物车"
+        "text": "抢单大厅"
       },
       {
         "pagePath": "pages/order/order",
