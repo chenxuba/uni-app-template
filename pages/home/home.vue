@@ -324,7 +324,7 @@ export default {
 	margin-bottom: 15upx;
 	padding: 20upx 30upx;
 	display: flex;
-	// align-items: center;
+	align-items: center;
 	border-radius: 20upx;
 	margin: 0 20upx 15upx 20upx;
 	box-shadow: 0 4upx 20upx rgba(0, 0, 0, 0.05);
@@ -462,7 +462,6 @@ export default {
 			padding: 30upx;
 			border-bottom: 1upx solid #f0f0f0;
 			transition: background-color 0.3s;
-
 			&:last-child {
 				border-bottom: none;
 			}
@@ -486,7 +485,7 @@ export default {
 
 			.shop-info {
 				flex: 1;
-
+				height: 220upx;
 				.shop-name {
 					font-size: 32upx;
 					font-weight: bold;
@@ -544,7 +543,6 @@ export default {
 
 					.delivery-info {
 						text-align: right;
-
 						.delivery-fee {
 							font-size: 24upx;
 							color: #333;

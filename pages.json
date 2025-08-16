@@ -33,9 +33,9 @@
       }
     },
     {
-      "path": "pages/shopCar/shopCar",
+      "path": "pages/grabOrderHall/grabOrderHall",
       "style": {
-        "navigationBarTitleText": "购物车",
+        "navigationBarTitleText": "抢单大厅",
         "enablePullDownRefresh": false
       }
     },
@@ -43,6 +43,13 @@
       "path": "pages/order/order",
       "style": {
         "navigationBarTitleText": "订单",
+        "enablePullDownRefresh": false
+      }
+    },
+    {
+      "path": "pages/orderDetail/orderDetail",
+      "style": {
+        "navigationBarTitleText": "订单详情",
         "enablePullDownRefresh": false
       }
     }
@@ -67,7 +74,7 @@
         "text": "首页"
       },
       {
-        "pagePath": "pages/shopCar/shopCar",
+        "pagePath": "pages/grabOrderHall/grabOrderHall",
         "iconPath": "static/icon/tab/icon_wode.png",
         "selectedIconPath": "static/icon/tab/icon_wode_c.png",
         "text": "抢单大厅"
