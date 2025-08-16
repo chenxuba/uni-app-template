@@ -5,22 +5,25 @@
 		<public-module></public-module>
 		<!-- banner -->
 		<view class="banner_swiper_box">
-			<swiper class="banner_swiper" :autoplay="true" :interval="3000" circular previous-margin="30px" next-margin="30px" :duration="1000" @change="onSwiperChange">
+			<swiper class="banner_swiper" :autoplay="true" :interval="3000" circular previous-margin="30px" next-margin="30px"
+				:duration="1000" @change="onSwiperChange">
 				<swiper-item v-for="(item, index) of bannerList" :key="index">
 					<view class="banner_img" :class="{ active: swiperIndex == index }">
-						<image src="https://public-obs-cdn.anjulian.com.cn/2024-07-01/ab664d9a-6573-4456-9643-657a7bba8800.png" mode="aspectFill" @click="onBanner(item)"></image>
+						<image src="https://public-obs-cdn.anjulian.com.cn/2024-07-01/ab664d9a-6573-4456-9643-657a7bba8800.png"
+							mode="aspectFill" @click="onBanner(item)"></image>
 					</view>
 				</swiper-item>
 			</swiper>
 		</view>
-		<view class="video_box" v-if="videoShow" @click="onCloseVideo"><video :src="videoUrl" autoplay="true" controls></video></view>
+		<view class="video_box" v-if="videoShow" @click="onCloseVideo"><video :src="videoUrl" autoplay="true"
+				controls></video></view>
 	</view>
 </template>
 
 <script>
 import { mapState, mapMutations } from 'vuex';
 // #ifdef MP-WEIXIN
-import {onLogin} from '@/config/login';
+import { onLogin } from '@/config/login';
 // #endif
 export default {
 	data() {
@@ -38,7 +41,7 @@ export default {
 	onLoad(e) {
 		// #ifdef MP-WEIXIN
 		onLogin(() => {
-			this.getCoupon();
+			// this.getCoupon();
 		});
 		// #endif
 	},
@@ -48,7 +51,7 @@ export default {
 	//方法
 	methods: {
 		...mapMutations(['setWebViewUrl']),
-		pageData() {},
+		pageData() { },
 		onPageJump(url) {
 			uni.navigateTo({
 				url: url
@@ -72,18 +75,18 @@ export default {
 			}
 		},
 		// 轮播图变化
-		onSwiperChange(e){
+		onSwiperChange(e) {
 			this.swiperIndex = e.detail.current;
 		}
 	},
 	//页面隐藏
-	onHide() {},
+	onHide() { },
 	//页面卸载
-	onUnload() {},
+	onUnload() { },
 	//页面下来刷新
-	onPullDownRefresh() {},
+	onPullDownRefresh() { },
 	//页面上拉触底
-	onReachBottom() {},
+	onReachBottom() { },
 	//用户点击分享
 	onShareAppMessage(e) {
 		return this.wxShare();
@@ -92,9 +95,11 @@ export default {
 </script>
 <style lang="scss" scoped>
 @import '@/style/mixin.scss';
+
 .banner_swiper_box {
 	padding-top: 15upx;
 	background-color: #fff;
+
 	.banner_swiper {
 		height: 315upx;
 
@@ -102,14 +107,17 @@ export default {
 			box-sizing: border-box;
 			display: flex;
 			align-items: center;
+
 			.banner_img {
 				width: 100%;
 				height: 100%;
 				transform: scale(0.9);
 				transition: all 0.4s;
+
 				&.active {
 					transform: scale(1);
 				}
+
 				image {
 					width: 100%;
 					height: 100%;
@@ -133,6 +141,7 @@ export default {
 	display: flex;
 	align-items: center;
 	justify-content: center;
+
 	video {
 		width: 100%;
 	}

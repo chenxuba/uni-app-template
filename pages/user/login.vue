@@ -28,7 +28,20 @@
 		
 		<!-- 登录按钮 -->
 		<view class="btn_box">
+			<!-- #ifdef MP-WEIXIN -->
+			<button 
+				open-type="getPhoneNumber" 
+				@getphonenumber="onGetPhoneNumber" 
+				class="login_btn" 
+				:class="{active: agree}"
+				:disabled="!agree">
+				用户一键登录
+			</button>
+			<!-- #endif -->
+			
+			<!-- #ifndef MP-WEIXIN -->
 			<button @click="onSubmit" class="login_btn" :class="{active: agree}">用户一键登录</button>
+			<!-- #endif -->
 		</view>
 	</view>
 </template>
@@ -54,21 +67,98 @@
 					url: url
 				});
 			},
-			onSubmit() {
-				if (!this.agree) {
-					uni.showToast({
-						title: '请先同意《用户协议》和《隐私政策》',
-						icon: 'none'
-					});
-					return;
-				}
-				
-				// 这里可以添加实际的登录逻辑
+					onSubmit() {
+			if (!this.agree) {
 				uni.showToast({
-					title: '一键登录功能待实现',
+					title: '请先同意《用户协议》和《隐私政策》',
+					icon: 'none'
+				});
+				return;
+			}
+			
+			// 一键登录流程
+			this.oneClickLogin();
+		},
+		
+		// 一键登录方法（非微信小程序使用）
+		oneClickLogin() {
+			// #ifdef APP-PLUS
+			// APP端一键登录
+			uni.showToast({
+				title: 'APP端一键登录功能待开发',
+				icon: 'none'
+			});
+			// #endif
+			
+			// #ifdef H5
+			// H5端提示
+			uni.showToast({
+				title: 'H5端暂不支持一键登录',
+				icon: 'none'
+			});
+			// #endif
+		},
+		
+		// 处理手机号授权回调（微信小程序专用）
+		onGetPhoneNumber(e) {
+			if (!this.agree) {
+				uni.showToast({
+					title: '请先同意《用户协议》和《隐私政策》',
+					icon: 'none'
+				});
+				return;
+			}
+			
+			if (e.detail.errMsg === 'getPhoneNumber:ok') {
+				// 获取到手机号加密信息，发送到后端解密并登录
+				this.loginWithPhoneNumber(e.detail);
+			} else if (e.detail.errMsg === 'getPhoneNumber:fail user deny') {
+				uni.showToast({
+					title: '需要手机号授权才能登录',
+					icon: 'none'
+				});
+			} else {
+				uni.showToast({
+					title: '获取手机号失败，请重试',
 					icon: 'none'
 				});
 			}
+		},
+		
+		// 使用手机号登录
+		loginWithPhoneNumber(phoneDetail) {
+			const that = this;
+			
+			uni.showLoading({
+				title: '登录中...'
+			});
+			
+			// 调用配置文件中的手机号登录方法
+			this.$login.phoneLogin(phoneDetail, (res, err) => {
+				uni.hideLoading();
+				
+				if (res) {
+					// 登录成功
+					uni.showToast({
+						title: '登录成功',
+						icon: 'success'
+					});
+					
+					// 延迟跳转到首页
+					setTimeout(() => {
+						uni.switchTab({
+							url: '/pages/home/home'
+						});
+					}, 1500);
+				} else {
+					// 登录失败
+					uni.showToast({
+						title: err?.errMsg || '登录失败，请重试',
+						icon: 'none'
+					});
+				}
+			});
+		}
 		},
 		//页面隐藏
 		onHide() {},
@@ -191,6 +281,11 @@
 				
 				&.active {
 					background-color: #007aff;
+				}
+				
+				&[disabled] {
+					background-color: #ccc !important;
+					color: #999 !important;
 				}
 			}
 		}

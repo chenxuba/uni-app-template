@@ -7,12 +7,6 @@ export const mutations = {
   setUserInfo(state, data) {
   	if (data) {
   		state.userInfo =  Object.assign({}, state.userInfo,data);
-  		// #ifdef H5
-  		window.sessionStorage.setItem('userInfo', JSON.stringify(state.userInfo));
-  		// #endif
-  		// #ifndef H5
-  		uni.setStorageSync('userInfo', state.userInfo);
-  		// #endif
   	}
   },
   // 退出APP

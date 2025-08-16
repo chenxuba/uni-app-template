@@ -17,8 +17,9 @@ import { wxShare } from '@/config/utils'
 Vue.prototype.wxShare = wxShare;
 // #endif
 //判断是否登录
-import { judgeLogin } from '@/config/login';
+import { judgeLogin, phoneLogin } from '@/config/login';
 Vue.prototype.judgeLogin = judgeLogin;
+Vue.prototype.$login = { phoneLogin };
 Vue.config.productionTip = false;
 // #ifdef H5
 //微信SDK

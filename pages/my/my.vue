@@ -7,14 +7,20 @@
 </template>
 
 <script>
+import { onLogin } from '@/config/login';
 export default {
 	data() {
 		return {
 			
 		};
 	},
-	onLoad(e) {
-		
+		//第一次加载
+		onLoad(e) {
+		// #ifdef MP-WEIXIN
+		onLogin(() => {
+			// this.getCoupon();
+		});
+		// #endif
 	},
 	onShow() {
 		
