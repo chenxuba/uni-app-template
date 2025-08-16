@@ -136,8 +136,6 @@ function phoneLogin(phoneDetail, callback) {
 					
 					// 调用手机号登录接口
 					$http.post('api/user/phone-login', httpData).then(res => {
-                        console.log(res);
-                        
 						loginStart = true;
                         uni.setStorageSync("userInfo", res);
 						store.commit('setUserInfo', res);
