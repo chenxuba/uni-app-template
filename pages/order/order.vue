@@ -15,11 +15,7 @@ export default {
 		};
 	},
 	onLoad(e) {
-		
-	},
-	onShow() {
-		 // 登录检查（未登录会自动跳转到登录页面）
-		 judgeLogin((userInfo, error) => {
+		judgeLogin((userInfo, error) => {
 			if (userInfo) {
 				console.log('用户已登录:', userInfo);
 				// 执行需要登录后的操作
@@ -28,6 +24,10 @@ export default {
 				// 用户未登录，已自动跳转到登录页面
 			}
 		});
+	},
+	onShow() {
+		 // 登录检查（未登录会自动跳转到登录页面）
+		 
 	},
 	//方法
 	methods: {

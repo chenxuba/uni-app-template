@@ -495,7 +495,7 @@ export default {
 	padding: 12rpx 24rpx;
 	border-radius: 20rpx;
 	margin-left: 20rpx;
-	
+	display: flex;
 	.action-text {
 		color: #fff;
 		font-size: 24rpx;

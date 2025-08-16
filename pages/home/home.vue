@@ -55,12 +55,58 @@
 					<text class="service-title">帮我取</text>
 					<text class="service-desc">代取服务</text>
 				</view>
-				<view class="service-item" @click="onServiceClick('takeout')">
-					<view class="service-icon takeout-icon">
-						<text class="icon-text">🍔</text>
+				<view class="service-item" @click="onServiceClick('help')">
+					<view class="service-icon help-icon">
+						<text class="icon-text">🤝</text>
 					</view>
-					<text class="service-title">校园外卖</text>
-					<text class="service-desc">美食配送</text>
+					<text class="service-title">帮我办</text>
+					<text class="service-desc">代办服务</text>
+				</view>
+			</view>
+		</view>
+		
+		<!-- 校园外卖品字形布局 -->
+		<view class="takeout-pyramid-container">
+			<!-- 校园外卖主入口 -->
+			<view class="takeout-main-row">
+				<view class="service-item takeout-main" @click="onServiceClick('takeout')">
+					<view class="takeout-bg-decoration"></view>
+					<view class="takeout-content">
+						<view class="takeout-left-area">
+							<view class="service-icon takeout-icon">
+								<text class="icon-text">🍔</text>
+							</view>
+							<view class="takeout-text-area">
+								<text class="service-title">校园外卖</text>
+								<text class="service-desc">美食配送</text>
+								<view class="takeout-tags">
+									<text class="tag">热销</text>
+									<text class="tag">快捷</text>
+									<text class="tag">专送上寝</text>
+								</view>
+							</view>
+						</view>
+						<view class="takeout-image-area"></view>
+					</view>
+					<view class="takeout-corner-decoration"></view>
+				</view>
+			</view>
+			
+			<!-- 申请入口行 -->
+			<view class="takeout-apply-row">
+				<view class="option-item" @click="onTakeoutOptionClick('delivery')">
+					<view class="option-icon">
+						<text class="icon-text">🚚</text>
+					</view>
+					<text class="option-title">申请成为配送员</text>
+					<text class="option-desc">配送任务</text>
+				</view>
+				<view class="option-item" @click="onTakeoutOptionClick('receiver')">
+					<view class="option-icon">
+						<text class="icon-text">📋</text>
+					</view>
+					<text class="option-title">申请成为接单员</text>
+					<text class="option-desc">接单任务</text>
 				</view>
 			</view>
 		</view>
@@ -75,9 +121,19 @@
 				<view class="shop-item" v-for="(shop, index) in shopList" :key="index" @click="onShopClick(shop)">
 					<view class="shop-image">
 						<image :src="shop.image" mode="aspectFill"></image>
+						<!-- 推荐标记 -->
+						<view v-if="shop.recommended" class="recommend-badge">
+							<text class="recommend-text">推荐</text>
+						</view>
 					</view>
 					<view class="shop-info">
-						<view class="shop-name">{{ shop.name }}</view>
+						<view class="shop-header">
+							<view class="shop-name">{{ shop.name }}</view>
+							<!-- 推荐图标 -->
+							<view v-if="shop.recommended" class="recommend-icon">
+								<text class="icon-crown">👑</text>
+							</view>
+						</view>
 						<view class="shop-desc">{{ shop.description }}</view>
 						<view class="shop-tags">
 							<text class="tag" v-for="tag in shop.tags" :key="tag">{{ tag }}</text>
@@ -126,7 +182,8 @@ export default {
 					sales: 1200,
 					deliveryFee: 3,
 					deliveryTime: 25,
-					tags: ['快餐', '盖饭', '热销']
+					tags: ['快餐', '盖饭', '热销'],
+					recommended: true // 推荐店铺
 				},
 				{
 					id: 2,
@@ -137,7 +194,8 @@ export default {
 					sales: 800,
 					deliveryFee: 4,
 					deliveryTime: 30,
-					tags: ['川菜', '麻辣', '下饭']
+					tags: ['川菜', '麻辣', '下饭'],
+					recommended: false
 				},
 				{
 					id: 3,
@@ -148,7 +206,8 @@ export default {
 					sales: 600,
 					deliveryFee: 2,
 					deliveryTime: 20,
-					tags: ['面食', '清真', '实惠']
+					tags: ['面食', '清真', '实惠'],
+					recommended: true // 推荐店铺
 				}
 			]
 		};
@@ -156,13 +215,13 @@ export default {
 	
 	//第一次加载
 	onLoad(e) {
-		judgeLogin((userInfo, error) => {
-			if (userInfo) {
-				console.log('用户已登录:', userInfo);
-			} else {
-				console.log('未登录，已跳转到登录页面:', error);
-			}
-		});
+		// judgeLogin((userInfo, error) => {
+		// 	if (userInfo) {
+		// 		console.log('用户已登录:', userInfo);
+		// 	} else {
+		// 		console.log('未登录，已跳转到登录页面:', error);
+		// 	}
+		// });
 	},
 	//页面显示
 	onShow() {
@@ -225,9 +284,34 @@ export default {
 						icon: 'none'
 					});
 					break;
+				case 'help':
+					uni.showToast({
+						title: '帮我办服务',
+						icon: 'none'
+					});
+					break;
 				case 'takeout':
 					// 跳转到外卖页面或显示外卖店铺
 					this.scrollToShops();
+					break;
+			}
+		},
+		// 外卖选项点击
+		onTakeoutOptionClick(type) {
+			switch(type) {
+				case 'delivery':
+					uni.showToast({
+						title: '申请成为配送员',
+						icon: 'none'
+					});
+					// 这里可以跳转到配送员申请页面
+					break;
+				case 'receiver':
+					uni.showToast({
+						title: '申请成为接单员',
+						icon: 'none'
+					});
+					// 这里可以跳转到接单员申请页面
 					break;
 			}
 		},
@@ -430,6 +514,251 @@ export default {
 	}
 }
 
+// 校园外卖品字形布局样式
+.takeout-pyramid-container {
+	background-color: #fff;
+	margin: 0 20upx 15upx 20upx;
+	border-radius: 20upx;
+	padding: 30upx;
+	box-shadow: 0 4upx 20upx rgba(0, 0, 0, 0.05);
+
+	// 校园外卖主入口行
+	.takeout-main-row {
+		display: flex;
+		justify-content: center;
+		margin-bottom: 20upx;
+
+		.service-item {
+			width: 100%;
+			position: relative;
+			padding: 25upx 20upx;
+			border-radius: 20upx;
+			background: linear-gradient(135deg, #ff9a56 0%, #ff6b35 50%, #ff4757 100%);
+			color: #fff;
+			border: none;
+			box-shadow: 
+				0 8upx 25upx rgba(255, 107, 53, 0.4),
+				0 4upx 15upx rgba(255, 107, 53, 0.2),
+				inset 0 1upx 0 rgba(255, 255, 255, 0.3);
+			transition: all 0.3s ease;
+			overflow: hidden;
+
+			&:active {
+				transform: translateY(2upx);
+				box-shadow: 
+					0 6upx 20upx rgba(255, 107, 53, 0.5),
+					0 2upx 10upx rgba(255, 107, 53, 0.3);
+			}
+
+			// 背景装饰
+			.takeout-bg-decoration {
+				position: absolute;
+				top: -20upx;
+				right: -20upx;
+				width: 80upx;
+				height: 80upx;
+				background: radial-gradient(circle, rgba(255, 255, 255, 0.2) 0%, transparent 70%);
+				border-radius: 50%;
+			}
+
+			// 角落装饰
+			.takeout-corner-decoration {
+				position: absolute;
+				bottom: -10upx;
+				left: -10upx;
+				width: 40upx;
+				height: 40upx;
+				background: linear-gradient(45deg, rgba(255, 255, 255, 0.1) 0%, transparent 100%);
+				border-radius: 50%;
+			}
+
+			// 主要内容区域
+			.takeout-content {
+				display: flex;
+				align-items: center;
+				justify-content: space-between;
+				position: relative;
+				z-index: 2;
+				height: 100%;
+
+				// 左侧内容区域
+				.takeout-left-area {
+					display: flex;
+					align-items: center;
+					flex: 1;
+
+					.service-icon {
+						width: 60upx;
+						height: 60upx;
+						border-radius: 50%;
+						background: rgba(255, 255, 255, 0.25);
+						display: flex;
+						align-items: center;
+						justify-content: center;
+						box-shadow: 
+							0 4upx 15upx rgba(0, 0, 0, 0.1),
+							inset 0 1upx 0 rgba(255, 255, 255, 0.4);
+						backdrop-filter: blur(10upx);
+						flex-shrink: 0;
+
+						.icon-text {
+							font-size: 32upx;
+						}
+					}
+
+					.takeout-text-area {
+						flex: 1;
+						text-align: left;
+						margin-left: 20upx;
+
+						.service-title {
+							display: block;
+							font-size: 32upx;
+							font-weight: 700;
+							margin-bottom: 5upx;
+							text-shadow: 0 1upx 2upx rgba(0, 0, 0, 0.1);
+						}
+
+						.service-desc {
+							display: block;
+							font-size: 22upx;
+							opacity: 0.9;
+							font-weight: 400;
+							margin-bottom: 10upx;
+						}
+
+						.takeout-tags {
+							display: flex;
+							gap: 6upx;
+							flex-wrap: wrap;
+
+							.tag {
+								background: rgba(255, 255, 255, 0.25);
+								color: #fff;
+								font-size: 16upx;
+								font-weight: 500;
+								padding: 3upx 10upx;
+								border-radius: 12upx;
+								backdrop-filter: blur(5upx);
+								border: 1upx solid rgba(255, 255, 255, 0.2);
+								white-space: nowrap;
+							}
+						}
+					}
+				}
+
+				// 右侧图片区域
+				.takeout-image-area {
+					width: 100upx;
+					height: 100%;
+					margin-left: 15upx;
+					flex-shrink: 0;
+					position: relative;
+					border-radius: 6upx;
+					overflow: hidden;
+					background-image: url('https://pcsys.admin.ybc365.com/6add1afa-29d0-4e6a-acec-92d4c0314591.png');
+					background-size: cover;
+					background-position: center;
+					background-repeat: no-repeat;
+					opacity: 0.9;
+					box-shadow: 
+						0 4upx 15upx rgba(0, 0, 0, 0.15),
+						inset 0 1upx 0 rgba(255, 255, 255, 0.2);
+					
+					// 添加一个半透明遮罩层，让背景图更好地融入设计
+					&::before {
+						content: '';
+						position: absolute;
+						top: 0;
+						left: 0;
+						right: 0;
+						bottom: 0;
+						background: linear-gradient(135deg, 
+							rgba(255, 154, 86, 0.3) 0%, 
+							rgba(255, 107, 53, 0.2) 50%, 
+							rgba(255, 71, 87, 0.3) 100%);
+						mix-blend-mode: overlay;
+					}
+					
+					// 添加边框高光效果
+					&::after {
+						content: '';
+						position: absolute;
+						top: 0;
+						left: 0;
+						right: 0;
+						bottom: 0;
+						border: 1upx solid rgba(255, 255, 255, 0.3);
+						border-radius: 12upx;
+						pointer-events: none;
+					}
+				}
+			}
+		}
+	}
+
+	// 申请入口行 - 改为与4个帮服务一致的卡片样式
+	.takeout-apply-row {
+		display: flex;
+		justify-content: space-between;
+		gap: 20upx;
+
+		.option-item {
+			flex: 1;
+			text-align: center;
+			padding: 30upx 0; // 改为与上面4个服务一致的高度
+			border-radius: 15upx;
+			background: #f8f9ff;
+			color: #5a67d8;
+			border: 2upx solid #e2e8f0;
+			box-shadow: 0 4upx 15upx rgba(0, 0, 0, 0.08);
+			transition: all 0.3s ease;
+
+			&:nth-child(2) {
+				background: #fef5f8;
+				color: #d53f8c;
+				border-color: #fed7e2;
+			}
+
+			&:active {
+				transform: scale(0.98);
+				box-shadow: 0 2upx 8upx rgba(0, 0, 0, 0.12);
+			}
+
+			.option-icon {
+				width: 80upx; // 恢复到与4个帮服务一致的大小
+				height: 80upx;
+				margin: 0 auto 20upx; // 恢复到与4个帮服务一致的间距
+				border-radius: 50%;
+				background-color: rgba(255, 255, 255, 0.8);
+				display: flex;
+				align-items: center;
+				justify-content: center;
+				box-shadow: 0 2upx 8upx rgba(0, 0, 0, 0.1);
+
+				.icon-text {
+					font-size: 40upx; // 恢复到与4个帮服务一致的大小
+				}
+			}
+
+			.option-title {
+				display: block;
+				font-size: 32upx; // 改为与4个帮服务一致的标题大小
+				font-weight: 600;
+				margin-bottom: 10upx; // 添加底部间距
+			}
+			
+			// 添加描述文字样式，保持与4个帮服务一致
+			.option-desc {
+				display: block;
+				font-size: 24upx;
+				opacity: 0.7;
+				font-weight: 400;
+			}
+		}
+	}
+}
+
 // 店铺列表样式
 .shop-container {
 	background-color: #fff;
@@ -476,21 +805,59 @@ export default {
 				margin-right: 20upx;
 				border-radius: 15upx;
 				overflow: hidden;
+				position: relative;
 
 				image {
 					width: 100%;
 					height: 100%;
+				}
+
+				// 推荐标记样式
+				.recommend-badge {
+					position: absolute;
+					top: 8upx;
+					left: 8upx;
+					background: linear-gradient(135deg, #ff6b35 0%, #f7931e 100%);
+					border-radius: 8upx;
+					padding: 4upx 8upx;
+					box-shadow: 0 2upx 8upx rgba(255, 107, 53, 0.4);
+
+					.recommend-text {
+						color: #fff;
+						font-size: 20upx;
+						font-weight: 600;
+						text-shadow: 0 1upx 2upx rgba(0, 0, 0, 0.2);
+					}
 				}
 			}
 
 			.shop-info {
 				flex: 1;
 				height: 220upx;
-				.shop-name {
-					font-size: 32upx;
-					font-weight: bold;
-					color: #333;
+
+				// 店铺标题区域（包含名称和推荐图标）
+				.shop-header {
+					display: flex;
+					align-items: center;
 					margin-bottom: 10upx;
+
+					.shop-name {
+						font-size: 32upx;
+						font-weight: bold;
+						color: #333;
+						flex: 1;
+					}
+
+					// 推荐图标
+					.recommend-icon {
+						margin-left: 10upx;
+						animation: crown-glow 2s ease-in-out infinite alternate;
+
+						.icon-crown {
+							font-size: 24upx;
+							filter: drop-shadow(0 0 4upx rgba(255, 215, 0, 0.6));
+						}
+					}
 				}
 
 				.shop-desc {
@@ -501,15 +868,53 @@ export default {
 
 				.shop-tags {
 					margin-bottom: 15upx;
+					display: flex;
+					flex-wrap: wrap;
+					gap: 8upx;
 
 					.tag {
-						display: inline-block;
-						background-color: #f0f0f0;
-						color: #666;
-						font-size: 22upx;
-						padding: 5upx 15upx;
-						border-radius: 15upx;
-						margin-right: 10upx;
+						display: inline-flex;
+						align-items: center;
+						font-size: 20upx;
+						padding: 4upx 10upx;
+						border-radius: 10upx;
+						font-weight: 400;
+						transition: all 0.2s ease;
+
+						// 默认样式（第一个标签 - 橙色系）
+						&:nth-child(1) {
+							background-color: #fff5f0;
+							color: #ff6b35;
+							border: 1upx solid #ffe4d6;
+						}
+
+						// 第二个标签样式（蓝色系）
+						&:nth-child(2) {
+							background-color: #f0f4ff;
+							color: #5a67d8;
+							border: 1upx solid #d6e3ff;
+						}
+
+						// 第三个标签样式（粉色系）
+						&:nth-child(3) {
+							background-color: #fef5f8;
+							color: #d53f8c;
+							border: 1upx solid #fed7e2;
+						}
+
+						// 第四个标签样式（绿色系）
+						&:nth-child(4) {
+							background-color: #f0fdf4;
+							color: #16a34a;
+							border: 1upx solid #bbf7d0;
+						}
+
+						// 第五个及以后标签样式（灰色系）
+						&:nth-child(n+5) {
+							background-color: #f8f9fa;
+							color: #6c757d;
+							border: 1upx solid #e9ecef;
+						}
 					}
 				}
 
@@ -560,5 +965,16 @@ export default {
 	}
 }
 
+// 推荐图标发光动画
+@keyframes crown-glow {
+	0% {
+		filter: drop-shadow(0 0 4upx rgba(255, 215, 0, 0.6));
+		transform: scale(1);
+	}
+	100% {
+		filter: drop-shadow(0 0 8upx rgba(255, 215, 0, 0.9));
+		transform: scale(1.1);
+	}
+}
 
 </style>
