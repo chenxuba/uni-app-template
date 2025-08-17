@@ -602,14 +602,14 @@ export default {
 		}
 	},
 	onLoad(e) {
-		judgeLogin((userInfo, error) => {
-			if (userInfo) {
-				console.log('用户已登录:', userInfo);
-				this.loadOrderList();
-			} else {
-				console.log('未登录，已跳转到登录页面:', error);
-			}
-		});
+		// judgeLogin((userInfo, error) => {
+		// 	if (userInfo) {
+		// 		console.log('用户已登录:', userInfo);
+		// 		this.loadOrderList();
+		// 	} else {
+		// 		console.log('未登录，已跳转到登录页面:', error);
+		// 	}
+		// });
 		// 初始化标签计数
 		this.updateTabCounts();
 	},

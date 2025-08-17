@@ -3,7 +3,7 @@
 		<z-nav-bar backState="2000" title="首页"></z-nav-bar>
 		<!-- 公共组件-每个页面必须引入 -->
 		<public-module></public-module>
-		
+
 		<!-- 轮播图 -->
 		<view class="banner_swiper_box">
 			<swiper class="banner_swiper" :autoplay="true" :interval="3000" circular previous-margin="30px" next-margin="30px"
@@ -16,7 +16,7 @@
 				</swiper-item>
 			</swiper>
 		</view>
-		
+
 		<!-- 滚动公告 -->
 		<view class="notice-container">
 			<view class="notice-icon">
@@ -30,7 +30,33 @@
 				</swiper-item>
 			</swiper>
 		</view>
-		
+		<view class="takeout-pyramid-container">
+			<!-- 校园外卖主入口 -->
+			<view class="takeout-main-row">
+				<view class="service-item takeout-main" @click="onServiceClick('takeout')">
+					<view class="takeout-bg-decoration"></view>
+					<view class="takeout-content">
+						<view class="takeout-left-area">
+							<view class="service-icon takeout-icon">
+								<text class="icon-text">🍔</text>
+							</view>
+							<view class="takeout-text-area">
+								<text class="service-title">校园外卖</text>
+								<text class="service-desc">美食配送</text>
+								<view class="takeout-tags">
+									<text class="tag">热销</text>
+									<text class="tag">快捷</text>
+									<text class="tag">专送上寝</text>
+								</view>
+							</view>
+						</view>
+						<view class="takeout-image-area"></view>
+					</view>
+					<view class="takeout-corner-decoration"></view>
+				</view>
+			</view>
+		</view>
+
 		<!-- 服务模块 -->
 		<view class="service-container">
 			<view class="service-grid">
@@ -64,34 +90,11 @@
 				</view>
 			</view>
 		</view>
-		
+
 		<!-- 校园外卖品字形布局 -->
 		<view class="takeout-pyramid-container">
-			<!-- 校园外卖主入口 -->
-			<view class="takeout-main-row">
-				<view class="service-item takeout-main" @click="onServiceClick('takeout')">
-					<view class="takeout-bg-decoration"></view>
-					<view class="takeout-content">
-						<view class="takeout-left-area">
-							<view class="service-icon takeout-icon">
-								<text class="icon-text">🍔</text>
-							</view>
-							<view class="takeout-text-area">
-								<text class="service-title">校园外卖</text>
-								<text class="service-desc">美食配送</text>
-								<view class="takeout-tags">
-									<text class="tag">热销</text>
-									<text class="tag">快捷</text>
-									<text class="tag">专送上寝</text>
-								</view>
-							</view>
-						</view>
-						<view class="takeout-image-area"></view>
-					</view>
-					<view class="takeout-corner-decoration"></view>
-				</view>
-			</view>
-			
+
+
 			<!-- 申请入口行 -->
 			<view class="takeout-apply-row">
 				<view class="option-item" @click="onTakeoutOptionClick('delivery')">
@@ -110,7 +113,7 @@
 				</view>
 			</view>
 		</view>
-		
+
 		<!-- 外卖店铺列表 -->
 		<view class="shop-container">
 			<view class="section-title">
@@ -208,7 +211,7 @@ export default {
 			]
 		};
 	},
-	
+
 	//第一次加载
 	onLoad(e) {
 		// judgeLogin((userInfo, error) => {
@@ -260,7 +263,7 @@ export default {
 		},
 		// 服务模块点击
 		onServiceClick(type) {
-			switch(type) {
+			switch (type) {
 				case 'buy':
 					uni.showToast({
 						title: '帮我买服务',
@@ -294,7 +297,7 @@ export default {
 		},
 		// 外卖选项点击
 		onTakeoutOptionClick(type) {
-			switch(type) {
+			switch (type) {
 				case 'delivery':
 					uni.showToast({
 						title: '申请成为配送员',
@@ -523,7 +526,6 @@ export default {
 	.takeout-main-row {
 		display: flex;
 		justify-content: center;
-		margin-bottom: 30upx;
 
 		.service-item {
 			width: 100%;
@@ -533,7 +535,7 @@ export default {
 			background: linear-gradient(135deg, #ff9a56 0%, #ff6b35 50%, #ff4757 100%);
 			color: #fff;
 			border: none;
-			box-shadow: 
+			box-shadow:
 				0 8upx 25upx rgba(255, 107, 53, 0.4),
 				0 4upx 15upx rgba(255, 107, 53, 0.2),
 				inset 0 1upx 0 rgba(255, 255, 255, 0.3);
@@ -542,7 +544,7 @@ export default {
 
 			&:active {
 				transform: translateY(2upx);
-				box-shadow: 
+				box-shadow:
 					0 6upx 20upx rgba(255, 107, 53, 0.5),
 					0 2upx 10upx rgba(255, 107, 53, 0.3);
 			}
@@ -592,7 +594,7 @@ export default {
 						display: flex;
 						align-items: center;
 						justify-content: center;
-						box-shadow: 
+						box-shadow:
 							0 4upx 15upx rgba(0, 0, 0, 0.1),
 							inset 0 1upx 0 rgba(255, 255, 255, 0.4);
 						backdrop-filter: blur(10upx);
@@ -658,10 +660,10 @@ export default {
 					background-position: center;
 					background-repeat: no-repeat;
 					opacity: 0.9;
-					box-shadow: 
+					box-shadow:
 						0 4upx 15upx rgba(0, 0, 0, 0.15),
 						inset 0 1upx 0 rgba(255, 255, 255, 0.2);
-					
+
 					// 添加一个半透明遮罩层，让背景图更好地融入设计
 					&::before {
 						content: '';
@@ -670,13 +672,13 @@ export default {
 						left: 0;
 						right: 0;
 						bottom: 0;
-						background: linear-gradient(135deg, 
-							rgba(255, 154, 86, 0.3) 0%, 
-							rgba(255, 107, 53, 0.2) 50%, 
-							rgba(255, 71, 87, 0.3) 100%);
+						background: linear-gradient(135deg,
+								rgba(255, 154, 86, 0.3) 0%,
+								rgba(255, 107, 53, 0.2) 50%,
+								rgba(255, 71, 87, 0.3) 100%);
 						mix-blend-mode: overlay;
 					}
-					
+
 					// 添加边框高光效果
 					&::after {
 						content: '';
@@ -744,7 +746,7 @@ export default {
 				font-weight: 600;
 				margin-bottom: 10upx; // 添加底部间距
 			}
-			
+
 			// 添加描述文字样式，保持与4个帮服务一致
 			.option-desc {
 				display: block;
@@ -762,7 +764,7 @@ export default {
 	margin: 0 20upx;
 	border-radius: 20upx;
 	box-shadow: 0 4upx 20upx rgba(0, 0, 0, 0.05);
-	
+
 	.section-title {
 		display: flex;
 		justify-content: space-between;
@@ -788,6 +790,7 @@ export default {
 			padding: 30upx;
 			border-bottom: 1upx solid #f0f0f0;
 			transition: background-color 0.3s;
+
 			&:last-child {
 				border-bottom: none;
 			}
@@ -941,6 +944,7 @@ export default {
 
 					.delivery-info {
 						text-align: right;
+
 						.delivery-fee {
 							font-size: 24upx;
 							color: #333;
@@ -957,7 +961,4 @@ export default {
 		}
 	}
 }
-
-
-
 </style>
