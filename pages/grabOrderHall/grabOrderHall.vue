@@ -2,8 +2,26 @@
 	<view class="grab-order-hall">
 		<z-nav-bar backState="2000" title="帮我买取送"></z-nav-bar>
 		
-		<!-- 筛选标签 -->
-		<view class="filter-tabs">
+		<!-- 大厅类型切换 -->
+		<view class="hall-type-switch">
+			<view 
+				class="hall-type-item"
+				:class="{ 'active': currentHallType === 'normal' }"
+				@click="switchHallType('normal')"
+			>
+				<text class="hall-type-text">帮帮抢单大厅</text>
+			</view>
+			<view 
+				class="hall-type-item"
+				:class="{ 'active': currentHallType === 'delivery' }"
+				@click="switchHallType('delivery')"
+			>
+				<text class="hall-type-text">配送抢单大厅</text>
+			</view>
+		</view>
+		
+		<!-- 筛选标签 (只在普通抢单大厅显示) -->
+		<view v-if="currentHallType === 'normal'" class="filter-tabs">
 			<view 
 				class="tab-item" 
 				:class="{ 'active': currentTab === index }"
@@ -22,10 +40,14 @@
 				<!-- 订单内容 -->
 				<view class="order-content">
 					<view class="order-header">
-						<text class="order-title" :class="order.typeClass">{{ order.typeName }}</text>
+						<view class="order-title-wrapper">
+							<text class="order-title" :class="order.typeClass">{{ order.typeName }}</text>
+						</view>
 						<view class="order-price">
-							<text class="price-symbol">¥</text>
-							<text class="price-amount">{{ order.price }}</text>
+							<view class="price-wrapper">
+								<text class="price-symbol">¥</text>
+								<text class="price-amount">{{ order.price }}</text>	
+							</view>
 						</view>
 					</view>
 					
@@ -87,12 +109,18 @@
 export default {
 	data() {
 		return {
+			currentHallType: 'normal', // normal: 普通抢单大厅, delivery: 配送抢单大厅
 			currentTab: 0,
-			tabs: [
+			// 普通抢单大厅的标签
+			normalTabs: [
 				{ name: '全部', iconClass: 'icon-all', type: 'all' },
 				{ name: '帮我送', iconClass: 'icon-send', type: 'send' },
 				{ name: '帮我取', iconClass: 'icon-pick', type: 'pick' },
 				{ name: '帮我买', iconClass: 'icon-buy', type: 'buy' }
+			],
+			// 配送抢单大厅的标签（只有外卖配送）
+			deliveryTabs: [
+				{ name: '外卖配送', iconClass: 'icon-food', type: 'food' }
 			],
 			orders: [
 				{
@@ -197,16 +225,118 @@ export default {
 					deliveryDistance: '0.8',
 					totalDistance: '2.1'
 				}
+			],
+			// 配送抢单大厅订单数据（只有外卖配送）
+			deliveryOrders: [
+				{
+					id: 101,
+					type: 'food',
+					typeName: '外卖配送',
+					typeClass: 'type-food',
+					title: '肯德基外卖',
+					description: '全家桶套餐，请保温配送，客户已付款',
+					price: '18.00',
+					startLocation: '肯德基(天河店)',
+					startAddress: '天河路88号肯德基餐厅',
+					endLocation: '珠江新城',
+					endAddress: '珠江新城花城大道123号写字楼A座1208',
+					timeInfo: '15分钟前发布',
+					pickupDistance: '0.5',
+					deliveryDistance: '3.2',
+					totalDistance: '3.7'
+				},
+				{
+					id: 102,
+					type: 'food',
+					typeName: '外卖配送',
+					typeClass: 'type-food',
+					title: '星巴克咖啡',
+					description: '2杯拿铁，1份三明治，请尽快配送',
+					price: '20.00',
+					startLocation: '星巴克(购书中心店)',
+					startAddress: '天河路购书中心星巴克',
+					endLocation: '体育西路',
+					endAddress: '体育西路维多利广场办公楼15楼',
+					timeInfo: '8分钟前发布',
+					pickupDistance: '0.7',
+					deliveryDistance: '1.5',
+					totalDistance: '2.2'
+				},
+				{
+					id: 103,
+					type: 'food',
+					typeName: '外卖配送',
+					typeClass: 'type-food',
+					title: '麦当劳外卖',
+					description: '巨无霸套餐，薯条要热的，可乐要冰的',
+					price: '25.00',
+					startLocation: '麦当劳(万达店)',
+					startAddress: '万达广场3楼美食街麦当劳',
+					endLocation: '阳光小区',
+					endAddress: '阳光小区15栋2单元1203室',
+					timeInfo: '12分钟前发布',
+					pickupDistance: '1.2',
+					deliveryDistance: '2.8',
+					totalDistance: '4.0'
+				},
+				{
+					id: 104,
+					type: 'food',
+					typeName: '外卖配送',
+					typeClass: 'type-food',
+					title: '必胜客披萨',
+					description: '超级至尊披萨，趁热配送',
+					price: '35.00',
+					startLocation: '必胜客(中心店)',
+					startAddress: '中心大街必胜客餐厅',
+					endLocation: '华府天地',
+					endAddress: '华府天地B座2208室',
+					timeInfo: '18分钟前发布',
+					pickupDistance: '0.8',
+					deliveryDistance: '3.5',
+					totalDistance: '4.3'
+				},
+				{
+					id: 105,
+					type: 'food',
+					typeName: '外卖配送',
+					typeClass: 'type-food',
+					title: '海底捞外卖',
+					description: '番茄火锅底料，牛肉丸子，蔬菜拼盘',
+					price: '45.00',
+					startLocation: '海底捞(天河店)',
+					startAddress: '天河路海底捞火锅店',
+					endLocation: '珠江新城',
+					endAddress: '珠江新城CBD写字楼A座1888',
+					timeInfo: '5分钟前发布',
+					pickupDistance: '1.5',
+					deliveryDistance: '2.2',
+					totalDistance: '3.7'
+				}
 			]
 		};
 	},
 	computed: {
+		// 当前使用的标签配置
+		tabs() {
+			return this.currentHallType === 'normal' ? this.normalTabs : this.deliveryTabs;
+		},
+		// 当前使用的订单数据
+		currentOrders() {
+			return this.currentHallType === 'normal' ? this.orders : this.deliveryOrders;
+		},
+		// 筛选后的订单
 		filteredOrders() {
+			// 如果是配送大厅，直接返回所有外卖配送订单（不需要筛选）
+			if (this.currentHallType === 'delivery') {
+				return this.currentOrders;
+			}
+			// 普通抢单大厅的筛选逻辑
 			if (this.currentTab === 0) {
-				return this.orders;
+				return this.currentOrders;
 			}
 			const currentType = this.tabs[this.currentTab].type;
-			return this.orders.filter(order => order.type === currentType);
+			return this.currentOrders.filter(order => order.type === currentType);
 		}
 	},
 	onLoad(e) {
@@ -217,6 +347,11 @@ export default {
 	},
 	//方法
 	methods: {
+		// 切换大厅类型
+		switchHallType(type) {
+			this.currentHallType = type;
+			this.currentTab = 0; // 重置到第一个标签
+		},
 		switchTab(index) {
 			this.currentTab = index;
 		},
@@ -276,6 +411,40 @@ export default {
 	min-height: 100vh;
 }
 
+// 大厅类型切换样式
+.hall-type-switch {
+	display: flex;
+	background-color: #fff;
+	margin: 20rpx;
+	border-radius: 12rpx;
+	padding: 8rpx;
+	box-shadow: 0 2rpx 10rpx rgba(0, 0, 0, 0.05);
+	
+	.hall-type-item {
+		flex: 1;
+		text-align: center;
+		padding: 20rpx 10rpx;
+		border-radius: 8rpx;
+		transition: all 0.3s ease;
+		
+		&.active {
+			background: linear-gradient(135deg, $themeColor, #ff8a65);
+			box-shadow: 0 4rpx 12rpx rgba(234, 85, 45, 0.3);
+			
+			.hall-type-text {
+				color: #fff;
+				font-weight: bold;
+			}
+		}
+		
+		.hall-type-text {
+			font-size: 28rpx;
+			color: #666;
+			transition: all 0.3s ease;
+		}
+	}
+}
+
 // 筛选标签样式
 .filter-tabs {
 	display: flex;
@@ -310,6 +479,11 @@ export default {
 				}
 				&.icon-buy::before {
 					background-color: #45b7d1;
+				}
+				
+				// 配送大厅外卖配送图标激活状态
+				&.icon-food::before {
+					background-color: #ff9800;
 				}
 			}
 			
@@ -367,6 +541,12 @@ export default {
 			background-color: #45b7d1;
 			opacity: 0.6;
 		}
+		
+		// 配送大厅外卖配送图标
+		&.icon-food::before {
+			background-color: #ff9800;
+			opacity: 0.6;
+		}
 	}
 	
 	.tab-text {
@@ -409,11 +589,17 @@ export default {
 	align-items: center;
 	margin-bottom: 20rpx;
 	
+	.order-title-wrapper {
+		display: flex;
+		align-items: center;
+		gap: 12rpx;
+		flex-wrap: wrap;
+	}
+	
 	.order-title {
 		font-size: 32rpx;
 		font-weight: bold;
 		color: #fff;
-		margin-right: 20rpx;
 		padding: 8rpx 20rpx;
 		border-radius: 16rpx;
 		
@@ -428,16 +614,26 @@ export default {
 		&.type-buy {
 			background: linear-gradient(135deg, #45b7d1, #96c93d);
 		}
+		
+		// 配送大厅外卖配送类型
+		&.type-food {
+			background: linear-gradient(135deg, #ff9800, #ff5722);
+		}
 	}
+	
+
 	
 	.order-price {
 		display: flex;
-		align-items: baseline;
-		
+		.price-wrapper{
+			display: flex;
+			align-items: center;
+		}
 		.price-symbol {
 			font-size: 24rpx;
 			color: $themeColor;
 			font-weight: bold;
+			margin-right: 4rpx;
 		}
 		
 		.price-amount {
@@ -445,6 +641,8 @@ export default {
 			color: $themeColor;
 			font-weight: bold;
 		}
+		
+
 	}
 }
 
