@@ -121,17 +121,13 @@
 				<view class="shop-item" v-for="(shop, index) in shopList" :key="index" @click="onShopClick(shop)">
 					<view class="shop-image">
 						<image :src="shop.image" mode="aspectFill"></image>
-						<!-- 推荐标记 -->
-						<view v-if="shop.recommended" class="recommend-badge">
-							<text class="recommend-text">推荐</text>
-						</view>
 					</view>
 					<view class="shop-info">
 						<view class="shop-header">
 							<view class="shop-name">{{ shop.name }}</view>
-							<!-- 推荐图标 -->
-							<view v-if="shop.recommended" class="recommend-icon">
-								<text class="icon-crown">👑</text>
+							<!-- 推荐标记 -->
+							<view v-if="shop.recommended" class="recommend-badge">
+								<text class="recommend-text">推荐</text>
 							</view>
 						</view>
 						<view class="shop-desc">{{ shop.description }}</view>
@@ -177,7 +173,7 @@ export default {
 					id: 1,
 					name: '美味小厨',
 					description: '精选食材，用心烹饪',
-					image: 'https://public-obs-cdn.anjulian.com.cn/2024-07-01/ab664d9a-6573-4456-9643-657a7bba8800.png',
+					image: 'https://miaobi-lite.bj.bcebos.com/miaobi/5mao/b%27LV8xNzM1NjE2MzU4LjU3ODUwNzI%3D%27/0.png',
 					rating: 4.8,
 					sales: 1200,
 					deliveryFee: 3,
@@ -189,19 +185,19 @@ export default {
 					id: 2,
 					name: '香辣川菜馆',
 					description: '正宗川味，麻辣鲜香',
-					image: 'https://public-obs-cdn.anjulian.com.cn/2024-07-01/ab664d9a-6573-4456-9643-657a7bba8800.png',
+					image: 'https://su.bcebos.com/b2b-jiameng/online/204e08f4-9558-4245-934f-c70ac9037a69',
 					rating: 4.6,
 					sales: 800,
 					deliveryFee: 4,
 					deliveryTime: 30,
 					tags: ['川菜', '麻辣', '下饭'],
-					recommended: false
+					recommended: true
 				},
 				{
 					id: 3,
 					name: '清真兰州拉面',
 					description: '手工拉面，汤鲜面劲',
-					image: 'https://public-obs-cdn.anjulian.com.cn/2024-07-01/ab664d9a-6573-4456-9643-657a7bba8800.png',
+					image: 'https://miaobi-lite.bj.bcebos.com/miaobi/5mao/b%275LqR5Y2X546r55Gw6bKc6Iqx6aW85Zu%2B54mHXzE3MzMxMTI1NDcuODczMjIxXzE3MzMxMTI1NDguMDU0OTM3%27/1.png',
 					rating: 4.7,
 					sales: 600,
 					deliveryFee: 2,
@@ -439,6 +435,7 @@ export default {
 	margin: 0 20upx 15upx 20upx;
 	border-radius: 20upx;
 	padding: 30upx;
+	padding-bottom: 15upx;
 	box-shadow: 0 4upx 20upx rgba(0, 0, 0, 0.05);
 
 	.service-grid {
@@ -526,7 +523,7 @@ export default {
 	.takeout-main-row {
 		display: flex;
 		justify-content: center;
-		margin-bottom: 20upx;
+		margin-bottom: 30upx;
 
 		.service-item {
 			width: 100%;
@@ -805,29 +802,10 @@ export default {
 				margin-right: 20upx;
 				border-radius: 15upx;
 				overflow: hidden;
-				position: relative;
 
 				image {
 					width: 100%;
 					height: 100%;
-				}
-
-				// 推荐标记样式
-				.recommend-badge {
-					position: absolute;
-					top: 8upx;
-					left: 8upx;
-					background: linear-gradient(135deg, #ff6b35 0%, #f7931e 100%);
-					border-radius: 8upx;
-					padding: 4upx 8upx;
-					box-shadow: 0 2upx 8upx rgba(255, 107, 53, 0.4);
-
-					.recommend-text {
-						color: #fff;
-						font-size: 20upx;
-						font-weight: 600;
-						text-shadow: 0 1upx 2upx rgba(0, 0, 0, 0.2);
-					}
 				}
 			}
 
@@ -835,7 +813,7 @@ export default {
 				flex: 1;
 				height: 220upx;
 
-				// 店铺标题区域（包含名称和推荐图标）
+				// 店铺标题区域（包含名称和推荐标记）
 				.shop-header {
 					display: flex;
 					align-items: center;
@@ -848,14 +826,29 @@ export default {
 						flex: 1;
 					}
 
-					// 推荐图标
-					.recommend-icon {
+					// 推荐标记
+					.recommend-badge {
 						margin-left: 10upx;
-						animation: crown-glow 2s ease-in-out infinite alternate;
+						background: linear-gradient(135deg, #ff6b35 0%, #f7931e 100%);
+						color: #fff;
+						border: none;
+						font-size: 22upx;
+						font-weight: 600;
+						padding: 6upx 10upx;
+						border-radius: 8upx;
+						box-shadow: 0 2upx 8upx rgba(255, 107, 53, 0.4);
+						transition: all 0.2s ease;
 
-						.icon-crown {
-							font-size: 24upx;
-							filter: drop-shadow(0 0 4upx rgba(255, 215, 0, 0.6));
+						.recommend-text {
+							line-height: 1;
+							text-shadow: 0 1upx 2upx rgba(0, 0, 0, 0.2);
+						}
+
+						// 悬停效果
+						&:active {
+							background: linear-gradient(135deg, #f7931e 0%, #ff6b35 100%);
+							box-shadow: 0 4upx 12upx rgba(255, 107, 53, 0.5);
+							transform: translateY(-1upx);
 						}
 					}
 				}
@@ -965,16 +958,6 @@ export default {
 	}
 }
 
-// 推荐图标发光动画
-@keyframes crown-glow {
-	0% {
-		filter: drop-shadow(0 0 4upx rgba(255, 215, 0, 0.6));
-		transform: scale(1);
-	}
-	100% {
-		filter: drop-shadow(0 0 8upx rgba(255, 215, 0, 0.9));
-		transform: scale(1.1);
-	}
-}
+
 
 </style>
