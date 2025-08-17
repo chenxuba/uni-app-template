@@ -1,6 +1,6 @@
 <template>
 	<view class="grab-order-hall">
-		<z-nav-bar backState="2000" title="帮我买取送"></z-nav-bar>
+		<z-nav-bar backState="2000" title="抢单大厅"></z-nav-bar>
 		
 		<!-- 大厅类型切换 -->
 		<view class="hall-type-switch">
