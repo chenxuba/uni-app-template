@@ -1,8 +1,29 @@
 <template>
 	<view class="home-container">
-		<z-nav-bar backState="2000" title="首页"></z-nav-bar>
+		<z-nav-bar backState="2000" :titleCenter="false" :title="navTitle">
+			<view class="nav-title-click" @click="openCampusPopup">
+				<text class="nav-title-text">{{ navTitle }}</text>
+				<image class="nav-title-icon" src="@/static/icon/icon_xiajiantou.png" mode="widthFix"></image>
+			</view>
+		</z-nav-bar>
 		<!-- 公共组件-每个页面必须引入 -->
 		<public-module></public-module>
+
+		<!-- 选择校区弹窗 -->
+		<z-popup v-model="showCampusPopup" type="center" :hideOnBlur="false">
+			<view class="campus-popup">
+				<view class="campus-title">请选择校区</view>
+				<view class="campus-list">
+					<view class="campus-item" v-for="campus in campusList" :key="campus._id"
+						:class="{ active: campus._id === selectedCampusId }" @click="onSelectCampus(campus)">
+						{{ campus.name || campus.campusName }}
+					</view>
+				</view>
+				<view class="campus-actions">
+					<view class="btn confirm" :class="{ disabled: !selectedCampusId }" @click="confirmCampusSelection">确定</view>
+				</view>
+			</view>
+		</z-popup>
 
 		<!-- 轮播图 -->
 		<view class="banner_swiper_box">
@@ -123,13 +144,13 @@
 			<view class="shop-list">
 				<view class="shop-item" v-for="(shop, index) in shopList" :key="index" @click="onShopClick(shop)">
 					<view class="shop-image">
-						<image :src="shop.image" mode="aspectFill"></image>
+						<image :src="shop.logo" mode="aspectFill"></image>
 					</view>
 					<view class="shop-info">
 						<view class="shop-header">
-							<view class="shop-name">{{ shop.name }}</view>
+							<view class="shop-name">{{ shop.shopName }}</view>
 							<!-- 推荐标记 -->
-							<view v-if="shop.recommended" class="recommend-badge">
+							<view v-if="shop.isRecommended" class="recommend-badge">
 								<text class="recommend-text">推荐</text>
 							</view>
 						</view>
@@ -140,12 +161,12 @@
 						<view class="shop-footer">
 							<view class="shop-rating">
 								<text class="rating-star">⭐</text>
-								<text class="rating-text">{{ shop.rating }}</text>
-								<text class="sales-text">月售{{ shop.sales }}+</text>
+								<text class="rating-text">{{ shop.rating || '5.0' }}</text>
+								<text class="sales-text">月售{{ shop.sales || 0 }}</text>
 							</view>
 							<view class="delivery-info">
-								<text class="delivery-fee">配送费¥{{ shop.deliveryFee }}</text>
-								<text class="delivery-time">{{ shop.deliveryTime }}分钟</text>
+								<text class="delivery-fee">配送费¥{{ shop.deliveryFee || 0 }}</text>
+								<text class="delivery-time">{{ shop.deliveryTime || 35 }}分钟 {{ shop.distanceKm !== null && shop.distanceKm !== undefined ? shop.distanceKm : '2.0' }}km</text>
 							</view>
 						</view>
 					</view>
@@ -156,14 +177,22 @@
 </template>
 
 <script>
-import { judgeLogin } from '@/config/login';
+import { getUserInfo } from '@/config/login';
+import $http from '@/config/requestConfig';
+import ZPopup from '@/uni_modules/z-popup/components/z-popup/z-popup.vue';
 export default {
+	components: { ZPopup },
 	data() {
 		return {
 			videoUrl: '',
 			videoShow: false,
 			swiperIndex: 0,
 			bannerList: [1, 1, 1, 1],
+			navTitle: '首页',
+			// 校区弹窗
+			showCampusPopup: false,
+			campusList: [],
+			selectedCampusId: null,
 			// 公告数据
 			noticeList: [
 				{ id: 1, content: '欢迎使用校园服务平台，为您提供便民服务！' },
@@ -171,42 +200,47 @@ export default {
 				{ id: 3, content: '外卖配送时间：8:00-22:00，准时送达！' }
 			],
 			// 店铺数据
-			shopList: [
+			shopList: [],
+			// 模拟店铺数据（用于无数据或异常时回退展示）
+			mockShopList: [
 				{
 					id: 1,
-					name: '美味小厨',
+					shopName: '美味小厨',
 					description: '精选食材，用心烹饪',
-					image: 'https://miaobi-lite.bj.bcebos.com/miaobi/5mao/b%27LV8xNzM1NjE2MzU4LjU3ODUwNzI%3D%27/0.png',
+					logo: 'https://miaobi-lite.bj.bcebos.com/miaobi/5mao/b%27LV8xNzM1NjE2MzU4LjU3ODUwNzI%3D%27/0.png',
 					rating: 4.8,
 					sales: 1200,
 					deliveryFee: 3,
 					deliveryTime: 25,
 					tags: ['快餐', '盖饭', '热销'],
-					recommended: true // 推荐店铺
+					isRecommended: true,
+					location: { latitude: 28.923638, longitude: 105.41624 }
 				},
 				{
 					id: 2,
-					name: '香辣川菜馆',
+					shopName: '香辣川菜馆',
 					description: '正宗川味，麻辣鲜香',
-					image: 'https://su.bcebos.com/b2b-jiameng/online/204e08f4-9558-4245-934f-c70ac9037a69',
+					logo: 'https://su.bcebos.com/b2b-jiameng/online/204e08f4-9558-4245-934f-c70ac9037a69',
 					rating: 4.6,
 					sales: 800,
 					deliveryFee: 4,
 					deliveryTime: 30,
 					tags: ['川菜', '麻辣', '下饭'],
-					recommended: true
+					isRecommended: true,
+					location: { latitude: 28.918638, longitude: 105.40124 }
 				},
 				{
 					id: 3,
-					name: '清真兰州拉面',
+					shopName: '清真兰州拉面',
 					description: '手工拉面，汤鲜面劲',
-					image: 'https://miaobi-lite.bj.bcebos.com/miaobi/5mao/b%275LqR5Y2X546r55Gw6bKc6Iqx6aW85Zu%2B54mHXzE3MzMxMTI1NDcuODczMjIxXzE3MzMxMTI1NDguMDU0OTM3%27/1.png',
+					logo: 'https://miaobi-lite.bj.bcebos.com/miaobi/5mao/b%275LqR5Y2X546r55Gw6bKc6Iqx6aW85Zu%2B54mHXzE3MzMxMTI1NDcuODczMjIxXzE3MzMxMTI1NDguMDU0OTM3%27/1.png',
 					rating: 4.7,
 					sales: 600,
 					deliveryFee: 2,
 					deliveryTime: 20,
 					tags: ['面食', '清真', '实惠'],
-					recommended: true // 推荐店铺
+					isRecommended: true,
+					location: { latitude: 28.909638, longitude: 105.39624 }
 				}
 			]
 		};
@@ -223,10 +257,138 @@ export default {
 		// });
 	},
 	//页面显示
-	onShow() {
+	onShow: async function () {
+		await this.checkDefaultCampusAndPrompt();
+		this.refreshNavTitle();
+		this.fetchShopList();
 	},
 	//方法
 	methods: {
+		async checkDefaultCampusAndPrompt() {
+			const userInfo = getUserInfo();
+			if (!userInfo || !userInfo.token) {
+				this.showCampusPopup = false;
+				this.navTitle = '首页';
+				return;
+			}
+			const hasDefaultCampus = userInfo.defaultCampus !== undefined && userInfo.defaultCampus !== null && userInfo.defaultCampus !== '';
+			if (!hasDefaultCampus) {
+				await this.fetchCampusList();
+				this.showCampusPopup = true;
+			}
+		},
+		refreshNavTitle() {
+			const userInfo = getUserInfo();
+			const campusName = userInfo && (userInfo.defaultCampusName);
+			this.navTitle = campusName ? campusName : '首页';
+		},
+		// 计算两个经纬度点之间的直线距离，返回公里数（保留1位小数）
+		calculateDistanceKm(lat1, lon1, lat2, lon2) {
+			if ([lat1, lon1, lat2, lon2].some(v => v === undefined || v === null || isNaN(Number(v)))) {
+				return null;
+			}
+			const toRad = d => (Number(d) * Math.PI) / 180;
+			const R = 6371; // 地球半径 km
+			const dLat = toRad(lat2 - lat1);
+			const dLon = toRad(lon2 - lon1);
+			const a = Math.sin(dLat / 2) * Math.sin(dLat / 2) +
+				Math.cos(toRad(lat1)) * Math.cos(toRad(lat2)) *
+				Math.sin(dLon / 2) * Math.sin(dLon / 2);
+			const c = 2 * Math.atan2(Math.sqrt(a), Math.sqrt(1 - a));
+			const d = R * c;
+			return Number(d.toFixed(1));
+		},
+		async fetchShopList() {
+			const userInfo = getUserInfo();
+			if (!userInfo || !userInfo.token) {
+				this.shopList = this.mockShopList;
+				return;
+			}
+			const hasDefaultCampus = userInfo.defaultCampus !== undefined && userInfo.defaultCampus !== null && userInfo.defaultCampus !== '';
+			if (!hasDefaultCampus) {
+				this.shopList = this.mockShopList;
+				return;
+			}
+			try {
+				const res = await $http.get('api/shop/campus/byId');
+				const list = Array.isArray(res?.shops) ? res.shops : [];
+				const campusLoc = res?.campus?.location || {};
+				const campusLat = campusLoc.latitude;
+				const campusLng = campusLoc.longitude;
+				const withDistance = (list.length ? list : this.mockShopList).map(s => {
+					const shopLoc = s.location || {};
+					const shopLat = shopLoc.latitude;
+					const shopLng = shopLoc.longitude;
+					const distanceKm = this.calculateDistanceKm(campusLat, campusLng, shopLat, shopLng);
+					return Object.assign({}, s, { distanceKm });
+				});
+				this.shopList = withDistance;
+			} catch (e) {
+				console.log('获取店铺失败，使用模拟数据', e);
+				// 失败时仍尝试用默认校区信息计算距离
+				const userInfo2 = getUserInfo() || {};
+				const campus = userInfo2.defaultCampusLocation || {};
+				const campusLat = campus.latitude;
+				const campusLng = campus.longitude;
+				this.shopList = this.mockShopList.map(s => {
+					const shopLoc = s.location || {};
+					const distanceKm = this.calculateDistanceKm(campusLat, campusLng, shopLoc.latitude, shopLoc.longitude);
+					return Object.assign({}, s, { distanceKm });
+				});
+			}
+		},
+		async fetchCampusList() {
+			try {
+				const res = await $http.get('api/campus');
+				this.campusList = Array.isArray(res) ? res : (res?.list || []);
+				const userInfo = getUserInfo() || {};
+				const currentDefaultId = userInfo.defaultCampus;
+				if (currentDefaultId && this.campusList.some(c => String(c._id) === String(currentDefaultId))) {
+					this.selectedCampusId = currentDefaultId;
+				} else if (this.campusList.length === 1) {
+					this.selectedCampusId = this.campusList[0]._id;
+				} else if (!this.selectedCampusId) {
+					this.selectedCampusId = null;
+				}
+			} catch (e) {
+				uni.showToast({ title: '获取校区失败', icon: 'none' });
+			}
+		},
+		openCampusPopup() {
+			const userInfo = getUserInfo();
+			if (!userInfo || !userInfo.token) {
+				uni.showToast({ title: '请先登录', icon: 'none' });
+				return;
+			}
+			this.fetchCampusList().then(() => {
+				this.showCampusPopup = true;
+			});
+		},
+		onSelectCampus(campus) {
+			this.selectedCampusId = campus._id;
+		},
+		async confirmCampusSelection() {
+			if (!this.selectedCampusId) return;
+			try {
+				const result = await $http.post('api/user/update-default-campus', { campusId: this.selectedCampusId });
+				const campus = (this.campusList || []).find(c => c._id === this.selectedCampusId);
+				const campusName = campus?.name || campus?.campusName || '';
+				const currentUserInfo = this.$store.state.userInfo || {};
+				const updatedUserInfo = Object.assign({}, currentUserInfo, {
+					defaultCampus: this.selectedCampusId,
+					defaultCampusName: campusName,
+					token: (result && result.token) ? result.token : currentUserInfo.token
+				});
+				this.$store.commit('setUserInfo', updatedUserInfo);
+				try { uni.setStorageSync('userInfo', updatedUserInfo); } catch (e) { }
+				this.showCampusPopup = false;
+				this.navTitle = campusName || '首页';
+				uni.showToast({ title: '设置成功', icon: 'success' });
+				this.fetchShopList();
+			} catch (e) {
+				uni.showToast({ title: '设置失败，请重试', icon: 'none' });
+			}
+		},
 		pageData() { },
 		onPageJump(url) {
 			uni.navigateTo({
@@ -398,6 +560,23 @@ export default {
 				}
 			}
 		}
+	}
+}
+
+// 自定义左侧标题及下拉图标
+.nav-title-click {
+	display: inline-flex;
+	align-items: center;
+
+	.nav-title-text {
+		font-size: 32rpx;
+		font-weight: 700;
+	}
+
+	.nav-title-icon {
+		width: 24rpx;
+		height: 24rpx;
+		margin-left: 8rpx;
 	}
 }
 
@@ -805,15 +984,20 @@ export default {
 				margin-right: 20upx;
 				border-radius: 15upx;
 				overflow: hidden;
+				flex: 0 0 220upx; // 防止被压缩
+				min-width: 220upx;
 
 				image {
 					width: 100%;
 					height: 100%;
+					display: block;
+					object-fit: cover;
 				}
 			}
 
 			.shop-info {
 				flex: 1;
+				min-width: 0;
 				height: 220upx;
 
 				// 店铺标题区域（包含名称和推荐标记）
@@ -821,17 +1005,25 @@ export default {
 					display: flex;
 					align-items: center;
 					margin-bottom: 10upx;
-
+					position: relative;
+					overflow: hidden;
 					.shop-name {
 						font-size: 32upx;
 						font-weight: bold;
 						color: #333;
 						flex: 1;
+						min-width: 0;
+						padding-right: 50upx;
+						overflow: hidden;
+						text-overflow: ellipsis;
+						white-space: nowrap;
 					}
 
 					// 推荐标记
 					.recommend-badge {
-						margin-left: 10upx;
+						position: absolute;
+						right: 0;
+						top: 0;
 						background: linear-gradient(135deg, #ff6b35 0%, #f7931e 100%);
 						color: #fff;
 						border: none;
@@ -841,7 +1033,7 @@ export default {
 						border-radius: 8upx;
 						box-shadow: 0 2upx 8upx rgba(255, 107, 53, 0.4);
 						transition: all 0.2s ease;
-
+						flex-shrink: 0;
 						.recommend-text {
 							line-height: 1;
 							text-shadow: 0 1upx 2upx rgba(0, 0, 0, 0.2);
@@ -926,7 +1118,7 @@ export default {
 						.rating-star {
 							font-size: 24upx;
 							margin-right: 15upx;
-							margin-top: -6upx;
+							margin-top: -5upx;
 						}
 
 						.rating-text {
@@ -956,6 +1148,68 @@ export default {
 							color: #999;
 						}
 					}
+				}
+			}
+		}
+	}
+}
+
+// 选择校区弹窗样式
+.campus-popup {
+	width: 600rpx;
+	background: #fff;
+	border-radius: 20rpx;
+	padding: 30rpx;
+
+	.campus-title {
+		font-size: 32rpx;
+		font-weight: 600;
+		text-align: center;
+		margin-bottom: 20rpx;
+	}
+
+	.campus-list {
+		max-height: 600rpx;
+		overflow-y: auto;
+
+		.campus-item {
+			padding: 22rpx 20rpx;
+			border: 1rpx solid #eee;
+			border-radius: 12rpx;
+			margin-bottom: 16rpx;
+			text-align: center;
+
+			&.active {
+				border-color: #ff6b35;
+				color: #ff6b35;
+				background: #fff5f0;
+			}
+		}
+	}
+
+	.campus-actions {
+		display: flex;
+		justify-content: space-between;
+		margin-top: 10rpx;
+
+		.btn {
+			flex: 1;
+			text-align: center;
+			padding: 22rpx 0;
+			border-radius: 12rpx;
+			font-size: 28rpx;
+
+			&.cancel {
+				background: #f5f5f5;
+				margin-right: 16rpx;
+			}
+
+			&.confirm {
+				background: #ff6b35;
+				color: #fff;
+
+				&.disabled {
+					opacity: 0.5;
 				}
 			}
 		}

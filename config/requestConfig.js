@@ -124,7 +124,7 @@ $http.requestStart = function(options) {
 	    storeUserInfo = uni.getStorageSync("userInfo");
 	}
 	if (storeUserInfo.token) {
-		options.header['user_token'] = storeUserInfo.token;
+		options.header['authorization'] = storeUserInfo.token;
 	};
 	return options;
 }

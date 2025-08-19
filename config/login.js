@@ -172,5 +172,6 @@ export {
 	judgeLogin,
 	phoneLogin,
 	onLogin,
-	resetLoginState
+	resetLoginState,
+	getUserInfo
 }
