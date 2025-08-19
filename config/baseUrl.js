@@ -2,7 +2,7 @@ let baseUrl = "";
 let socketUrl = "";
 if (process.env.NODE_ENV === 'development') {
 	// 开发环境
-	baseUrl = "http://localhost:8080/";
+	baseUrl = "http://192.168.31.70:8080/";
 	// socketUrl = "ws://localhost:6001/";
 	// baseUrl = "https://twin-ui.com/demo/";
 	// socketUrl = "ws://8.129.186.35:6001/";

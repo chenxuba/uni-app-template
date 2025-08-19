@@ -310,7 +310,7 @@ export default {
 				return;
 			}
 			try {
-				const res = await $http.get('api/shop/campus/byId');
+				const res = await $http.get('api/shop/campus/byId', { isRecommended: true });
 				const list = Array.isArray(res?.shops) ? res.shops : [];
 				const campusLoc = res?.campus?.location || {};
 				const campusLat = campusLoc.latitude;
