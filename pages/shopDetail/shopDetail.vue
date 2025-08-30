@@ -645,7 +645,8 @@
                 id: this.shopId,
                 name: this.shopInfo.name || this.shopInfo.shopName,
                 deliveryFee: this.shopInfo.deliveryFee,
-                minDeliveryAmount: this.shopInfo.minDeliveryAmount
+                minDeliveryAmount: this.shopInfo.minDeliveryAmount,
+                businessHours: this.shopInfo.businessHours
               }
             }))
           });

@@ -10,16 +10,23 @@
       </view>
       <view class="nav-right"></view>
     </view>
+    
+    <!-- 加载状态 -->
+    <view v-if="loading" class="loading-container">
+      <view class="loading-content">
+        <text class="loading-text">正在加载订单信息...</text>
+      </view>
+    </view>
 
     <!-- 订单信息 -->
-    <view class="order-info-section">
+    <view v-if="!loading" class="order-info-section">
       <view class="section-header">
         <text class="section-icon">📋</text>
         <text class="section-title">订单信息</text>
       </view>
       <view class="order-card">
         <view class="shop-info">
-          <image class="shop-avatar" :src="orderData.shopInfo.avatar" mode="aspectFill"></image>
+          <image class="shop-avatar" :src="orderData.shopInfo.avatar" mode="aspectFill" @error="handleAvatarError"></image>
           <view class="shop-details">
             <text class="shop-name">{{ orderData.shopInfo.name }}</text>
             <text class="order-number">订单号：{{ orderNumber }}</text>
@@ -34,27 +41,33 @@
         </view>
         
         <!-- 商品列表 -->
-        <view class="goods-list" v-if="showGoodsList">
+        <view class="goods-list" v-if="showGoodsList && orderData.cartItems && orderData.cartItems.length > 0">
           <view 
             v-for="item in orderData.cartItems" 
             :key="item.id"
             class="goods-item"
           >
-            <image class="goods-image" :src="item.image" mode="aspectFill"></image>
+            <image class="goods-image" :src="item.image || item.goodsImage" mode="aspectFill" @error="handleGoodsImageError($event, item)"></image>
             <view class="goods-info">
-              <text class="goods-name">{{ item.name }}</text>
+              <text class="goods-name">{{ item.name || item.goodsName }}</text>
+              <text class="goods-spec" v-if="item.specs || item.goodsSpec">{{ item.specs || item.goodsSpec }}</text>
               <view class="goods-price-qty">
-                <text class="goods-price">￥{{ item.price }}</text>
-                <text class="goods-quantity">x{{ item.quantity }}</text>
+                <text class="goods-price">￥{{ item.price || item.goodsPrice }}</text>
+                <text class="goods-quantity">x{{ item.quantity || item.goodsQuantity }}</text>
               </view>
             </view>
           </view>
+        </view>
+        
+        <!-- 无商品提示 -->
+        <view class="no-goods" v-if="showGoodsList && (!orderData.cartItems || orderData.cartItems.length === 0)">
+          <text class="no-goods-text">暂无商品信息</text>
         </view>
       </view>
     </view>
 
     <!-- 支付方式 -->
-    <view class="payment-method-section">
+    <view v-if="!loading" class="payment-method-section">
       <view class="section-header">
         <text class="section-icon">💳</text>
         <text class="section-title">支付方式</text>
@@ -68,7 +81,7 @@
           @click="selectPaymentMethod(index)"
         >
           <view class="method-left">
-            <image class="method-icon" :src="method.icon" mode="aspectFit"></image>
+            <image class="method-icon" :src="method.icon" mode="aspectFit" @error="handlePaymentIconError($event, method)"></image>
             <view class="method-info">
               <text class="method-name">{{ method.name }}</text>
               <text class="method-desc">{{ method.desc }}</text>
@@ -96,7 +109,7 @@
     </view> -->
 
     <!-- 费用明细 -->
-    <view class="cost-detail-section">
+    <view v-if="!loading" class="cost-detail-section">
       <view class="section-header">
         <text class="section-icon">💰</text>
         <text class="section-title">费用明细</text>
@@ -122,7 +135,7 @@
     </view>
 
     <!-- 底部支付按钮 -->
-    <view class="payment-footer">
+    <view v-if="!loading" class="payment-footer">
       <view class="payment-info">
         <text class="payment-label">实付金额</text>
         <text class="payment-amount">￥{{ orderData.totalAmount }}</text>
@@ -135,50 +148,38 @@
 </template>
 
 <script>
+/**
+ * 订单支付页面
+ * 功能：
+ * 1. 通过orderId参数获取订单详情
+ * 2. 调用 POST /api/order/detail 接口获取订单信息
+ * 3. 支持多种支付方式
+ * 4. 调用 POST /api/order/pay 接口处理支付
+ * 
+ * 使用方式：
+ * uni.navigateTo({
+ *   url: '/pages/payment/payment?orderId=订单ID'
+ * })
+ */
 export default {
   data() {
     return {
       orderData: {
         shopInfo: {
-          name: '美味餐厅',
+          name: '',
           avatar: 'https://gips0.baidu.com/it/u=2635637893,499839965&fm=3074&app=3074&f=JPEG'
         },
-        cartItems: [
-          {
-            id: 1,
-            name: '宫保鸡丁',
-            price: 28.00,
-            quantity: 2,
-            image: 'https://qcloud.dpfile.com/pc/AYKVFlHq5LZMSw74_nFMBKfWBpulLe7C_t_xxIo1wEUo-MshgBbiA_3Mv0AKp4cx.jpg'
-          },
-          {
-            id: 2,
-            name: '麻婆豆腐',
-            price: 18.00,
-            quantity: 1,
-            image: 'https://qcloud.dpfile.com/pc/AYKVFlHq5LZMSw74_nFMBKfWBpulLe7C_t_xxIo1wEUo-MshgBbiA_3Mv0AKp4cx.jpg'
-
-          },
-          {
-            id: 3,
-            name: '红烧肉',
-            price: 35.00,
-            quantity: 1,
-            image: 'https://qcloud.dpfile.com/pc/AYKVFlHq5LZMSw74_nFMBKfWBpulLe7C_t_xxIo1wEUo-MshgBbiA_3Mv0AKp4cx.jpg'
-
-          }
-        ],
+        cartItems: [],
         deliveryOption: {
           name: '标准配送',
           fee: 3
         },
-        coupon: {
-          name: '新用户优惠券',
-          discount: 5
-        },
-        totalAmount: 99.00
+        coupon: null,
+        totalAmount: 0
       },
-      orderNumber: '202501271234567890',
+      orderNumber: '',
+      orderId: '', // 订单ID
+      loading: true, // 加载状态
       selectedPaymentMethod: 0,
       paymentMethods: [
         {
@@ -216,11 +217,70 @@ export default {
   },
   
   onLoad(options) {
-    // 使用静态数据，不再从参数中获取
-    console.log('支付页面加载，使用静态订单数据');
+    // 从参数中获取订单ID
+    if (options.orderId) {
+      this.orderId = options.orderId;
+      this.getOrderDetail();
+    } else {
+      uni.showToast({
+        title: '订单ID不能为空',
+        icon: 'error'
+      });
+      setTimeout(() => {
+        uni.navigateBack();
+      }, 1500);
+    }
   },
   
   methods: {
+    /**
+     * 获取订单详情
+     */
+    async getOrderDetail() {
+      try {
+        uni.showLoading({
+          title: '加载中...'
+        });
+        
+        const result = await this.$http.post('api/order/detail', {
+          orderId: this.orderId
+        });
+        
+        if (result) {
+          // 处理接口返回的数据
+          this.orderData = {
+            shopInfo: {
+              name: result.shopId?.shopName || result.shopName || '未知商家',
+              avatar: result.shopId?.logo || result.shopAvatar || 'https://gips0.baidu.com/it/u=2635637893,499839965&fm=3074&app=3074&f=JPEG'
+            },
+            cartItems: result.orderItems || [],
+            deliveryOption: {
+              name: result.deliveryType || '标准配送',
+              fee: result.deliveryFee || 3
+            },
+            coupon: result.coupon || null,
+            totalAmount: result.totalAmount || 0
+          };
+          
+          this.orderNumber = result.orderNumber || this.orderId;
+          this.loading = false;
+        }
+        
+        uni.hideLoading();
+      } catch (error) {
+        console.error('获取订单详情失败:', error);
+        uni.hideLoading();
+        uni.showToast({
+          title: '获取订单信息失败',
+          icon: 'error'
+        });
+        
+        setTimeout(() => {
+          uni.navigateBack();
+        }, 1500);
+      }
+    },
+    
     goBack() {
       uni.navigateBack({
         delta: 1
@@ -257,22 +317,45 @@ export default {
       });
     },
     
-    executePayment() {
+    handleAvatarError() {
+      // 图片加载失败时使用默认头像
+      this.orderData.shopInfo.avatar = 'https://gips0.baidu.com/it/u=2635637893,499839965&fm=3074&app=3074&f=JPEG';
+    },
+    
+    handleGoodsImageError(event, item) {
+      // 商品图片加载失败时使用默认图片
+      const defaultImage = 'https://t8.baidu.com/it/u=3910782932,1536606427&fm=193';
+      if (item.image) {
+        item.image = defaultImage;
+      } else if (item.goodsImage) {
+        item.goodsImage = defaultImage;
+      }
+    },
+    
+    handlePaymentIconError(event, method) {
+      // 支付图标加载失败时使用默认图标
+      method.icon = 'https://t8.baidu.com/it/u=3910782932,1536606427&fm=193';
+    },
+    
+    async executePayment() {
       this.paymentProcessing = true;
       
-      uni.showLoading({
-        title: '支付中...'
-      });
-      
-      // 模拟支付过程
-      setTimeout(() => {
+      try {
+        uni.showLoading({
+          title: '支付中...'
+        });
+        
+        // 调用支付接口
+        const paymentResult = await this.$http.post('/api/order/pay', {
+          orderId: this.orderId,
+          paymentMethod: this.paymentMethods[this.selectedPaymentMethod].name,
+          amount: this.orderData.totalAmount
+        });
+        
         uni.hideLoading();
         this.paymentProcessing = false;
         
-        // 随机模拟支付成功或失败
-        const isSuccess = Math.random() > 0.1; // 90%成功率
-        
-        if (isSuccess) {
+        if (paymentResult && paymentResult.success) {
           uni.showToast({
             title: '支付成功',
             icon: 'success'
@@ -286,14 +369,23 @@ export default {
           }, 1500);
         } else {
           uni.showToast({
-            title: '支付失败，请重试',
+            title: paymentResult.message || '支付失败，请重试',
             icon: 'error'
           });
         }
-      }, 3000);
+      } catch (error) {
+        console.error('支付失败:', error);
+        uni.hideLoading();
+        this.paymentProcessing = false;
+        
+        uni.showToast({
+          title: '支付失败，请重试',
+          icon: 'error'
+        });
+      }
     }
   }
-};
+}
 </script>
 
 <style lang="scss" scoped>
@@ -302,6 +394,24 @@ export default {
   background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
   padding-bottom: 120px;
   padding-top: 88px;
+}
+
+// 加载状态
+.loading-container {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  min-height: 60vh;
+  
+  .loading-content {
+    text-align: center;
+    
+    .loading-text {
+      color: white;
+      font-size: 16px;
+      opacity: 0.8;
+    }
+  }
 }
 
 // 顶部导航栏
@@ -470,6 +580,13 @@ export default {
           margin-bottom: 4px;
         }
         
+        .goods-spec {
+          display: block;
+          font-size: 12px;
+          color: #999;
+          margin-bottom: 6px;
+        }
+        
         .goods-price-qty {
           display: flex;
           justify-content: space-between;
@@ -487,6 +604,16 @@ export default {
           }
         }
       }
+    }
+  }
+  
+  .no-goods {
+    padding: 20px;
+    text-align: center;
+    
+    .no-goods-text {
+      color: #999;
+      font-size: 14px;
     }
   }
 }

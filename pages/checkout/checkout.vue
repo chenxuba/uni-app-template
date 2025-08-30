@@ -16,14 +16,19 @@
       <view class="section-header">
         <text class="section-icon">📍</text>
         <text class="section-title">配送地址</text>
-        <text class="change-btn" @click="changeAddress">更换</text>
+        <text class="change-btn" @click="changeAddress">{{ addressInfo.address ? '更换' : '添加' }}</text>
       </view>
-      <view class="address-card">
+      <view class="address-card" v-if="addressInfo.address">
         <view class="address-info">
           <text class="address-name">{{ addressInfo.name }}</text>
           <text class="address-phone">{{ addressInfo.phone }}</text>
         </view>
         <text class="address-detail">{{ addressInfo.address }}</text>
+      </view>
+      <view class="no-address-card" v-else @click="changeAddress">
+        <text class="no-address-icon">📍</text>
+        <text class="no-address-text">请选择配送地址</text>
+        <text class="no-address-arrow">></text>
       </view>
     </view>
 
@@ -72,8 +77,8 @@
           </view>
         </view>
         <view class="time-tips">
-          <text class="tips-text">• 配送时间为9:00-21:00</text>
-          <text class="tips-text">• 请至少提前30分钟预约</text>
+          <text class="tips-text">• 配送时间为{{ (shopInfo.businessHours && shopInfo.businessHours.open) || '09:00' }}-{{ (shopInfo.businessHours && shopInfo.businessHours.close) || '21:00' }}</text>
+          <text class="tips-text">• 请至少提前1小时预约</text>
         </view>
       </view>
     </view>
@@ -159,7 +164,7 @@
     <view class="submit-section">
       <view class="submit-info">
         <text class="submit-total">¥{{ finalTotal }}</text>
-        <text class="submit-desc">{{ deliveryTime }}送达</text>
+        <text class="submit-desc">{{ deliveryTime }}</text>
       </view>
       <view class="submit-btn" @click.stop="submitOrder">
         <text class="submit-text">提交订单</text>
@@ -179,10 +184,10 @@ export default {
       
       // 配送地址
       addressInfo: {
-        id: 1,
-        name: '张三',
-        phone: '138****8888',
-        address: '北京市朝阳区某某大学宿舍楼A座101'
+        id: null,
+        name: '',
+        phone: '',
+        address: ''
       },
       
       // 配送时间选项
@@ -260,16 +265,19 @@ export default {
       }
     }
     
+    // 获取默认地址
+    this.getDefaultAddress();
+    
     // 初始化日期数据
     this.initDateData();
     
     // 监听地址选择事件
     uni.$on('addressSelected', (address) => {
       this.addressInfo = {
-        id: address.id,
-        name: address.name,
-        phone: address.phone,
-        address: address.address
+        id: address._id || address.id,
+        name: address.receiverName || address.name,
+        phone: address.receiverPhone || address.phone,
+        address: (address.address || '') + (address.detailAddress || '')
       };
     });
   },
@@ -305,7 +313,7 @@ export default {
       
       // 兼容旧版本的数据结构
       const goodsId = cartKey.split('_')[0];
-      return this.goodsData[goodsId]?.image || 'https://qcloud.dpfile.com/pc/cTtFrc8ybddtJ8cEQ7fXETOzhZD-1hbkXWvQfhsLtaplHP4aageCjl4jaSKDt6aH.jpg';
+      return (this.goodsData[goodsId] && this.goodsData[goodsId].image) || 'https://qcloud.dpfile.com/pc/cTtFrc8ybddtJ8cEQ7fXETOzhZD-1hbkXWvQfhsLtaplHP4aageCjl4jaSKDt6aH.jpg';
     },
     
     // 获取商品名称
@@ -317,7 +325,7 @@ export default {
       
       // 兼容旧版本的数据结构
       const goodsId = cartKey.split('_')[0];
-      return this.goodsData[goodsId]?.name || '未知商品';
+      return (this.goodsData[goodsId] && this.goodsData[goodsId].name) || '未知商品';
     },
     
     // 获取商品规格
@@ -344,7 +352,28 @@ export default {
       
       // 兼容旧版本的数据结构
       const goodsId = cartKey.split('_')[0];
-      return this.goodsData[goodsId]?.price || 0;
+      return (this.goodsData[goodsId] && this.goodsData[goodsId].price) || 0;
+    },
+    
+    // 获取默认地址
+    async getDefaultAddress() {
+      try {
+        const res = await this.$http.post('api/user/address/default');
+        if (res && res._id) {
+          this.addressInfo = {
+            id: res._id,
+            name: res.receiverName,
+            phone: res.receiverPhone,
+            address: (res.address || '') + (res.detailAddress || '')
+          };
+        } else {
+          // 如果没有默认地址，保持原有的模拟数据或清空
+          console.log('暂无默认地址');
+        }
+      } catch (error) {
+        console.error('获取默认地址失败:', error);
+        // 获取失败时不显示错误提示，保持原有地址信息
+      }
     },
     
     // 更换地址
@@ -372,6 +401,51 @@ export default {
       this.todayDate = this.formatDateForPicker(today);
       this.maxDate = this.formatDateForPicker(maxDay);
       this.selectedDate = this.todayDate;
+      
+      // 设置默认时间为当前时间1小时后
+      this.setDefaultTime();
+    },
+    
+    // 设置默认时间为当前时间1小时后
+    setDefaultTime() {
+      const now = new Date();
+      const oneHourLater = new Date(now.getTime() + 60 * 60 * 1000); // 1小时后
+      
+      // 获取店铺营业时间
+      const shopOpenTime = (this.shopInfo.businessHours && this.shopInfo.businessHours.open) || '09:00';
+      const shopCloseTime = (this.shopInfo.businessHours && this.shopInfo.businessHours.close) || '21:00';
+      
+      const [openHour, openMinute] = shopOpenTime.split(':').map(Number);
+      const [closeHour, closeMinute] = shopCloseTime.split(':').map(Number);
+      
+      const oneHourLaterMinutes = oneHourLater.getHours() * 60 + oneHourLater.getMinutes();
+      const openMinutes = openHour * 60 + openMinute;
+      const closeMinutes = closeHour * 60 + closeMinute;
+      
+      let defaultHour, defaultMinute;
+      
+      // 如果1小时后的时间在营业时间范围内，使用1小时后的时间
+      if (oneHourLaterMinutes >= openMinutes && oneHourLaterMinutes <= closeMinutes) {
+        defaultHour = oneHourLater.getHours();
+        defaultMinute = oneHourLater.getMinutes();
+      } else if (oneHourLaterMinutes < openMinutes) {
+        // 如果1小时后还没到营业时间，使用营业开始时间
+        defaultHour = openHour;
+        defaultMinute = openMinute;
+      } else {
+        // 如果1小时后已经超过营业时间，使用明天的营业开始时间
+        defaultHour = openHour;
+        defaultMinute = openMinute;
+        // 如果是今天且已经过了营业时间，日期应该设置为明天
+        const tomorrow = new Date(now);
+        tomorrow.setDate(now.getDate() + 1);
+        this.selectedDate = this.formatDateForPicker(tomorrow);
+      }
+      
+      const hours = String(defaultHour).padStart(2, '0');
+      const minutes = String(defaultMinute).padStart(2, '0');
+      
+      this.selectedTime = `${hours}:${minutes}`;
     },
     
     // 格式化日期用于picker
@@ -411,16 +485,27 @@ export default {
       const time = e.detail.value;
       const [hour, minute] = time.split(':');
       
-      // 验证时间范围（9:00-21:00）
-      if (parseInt(hour) < 9 || parseInt(hour) > 21) {
+      // 获取店铺营业时间
+      const shopOpenTime = (this.shopInfo.businessHours && this.shopInfo.businessHours.open) || '09:00';
+      const shopCloseTime = (this.shopInfo.businessHours && this.shopInfo.businessHours.close) || '21:00';
+      
+      const [openHour, openMinute] = shopOpenTime.split(':').map(Number);
+      const [closeHour, closeMinute] = shopCloseTime.split(':').map(Number);
+      
+      const selectedMinutes = parseInt(hour) * 60 + parseInt(minute);
+      const openMinutes = openHour * 60 + openMinute;
+      const closeMinutes = closeHour * 60 + closeMinute;
+      
+      // 验证时间范围（店铺营业时间）
+      if (selectedMinutes < openMinutes || selectedMinutes > closeMinutes) {
         uni.showToast({
-          title: '配送时间为9:00-21:00',
+          title: `配送时间为${shopOpenTime}-${shopCloseTime}`,
           icon: 'none'
         });
         return;
       }
       
-      // 如果选择的是今天，需要验证是否至少提前30分钟
+      // 如果选择的是今天，需要验证是否至少提前1小时
       if (this.selectedDate === this.todayDate) {
         const now = new Date();
         const selectedDateTime = new Date();
@@ -429,9 +514,9 @@ export default {
         const timeDiff = selectedDateTime.getTime() - now.getTime();
         const minDiff = timeDiff / (1000 * 60);
         
-        if (minDiff < 30) {
+        if (minDiff < 60) {
           uni.showToast({
-            title: '请至少提前30分钟预约',
+            title: '请至少提前1小时预约',
             icon: 'none'
           });
           return;
@@ -463,12 +548,16 @@ export default {
     },
     
     // 提交订单
-    submitOrder() {
-      if (!this.addressInfo.address) {
+    async submitOrder() {
+      if (!this.addressInfo.address || !this.addressInfo.name || !this.addressInfo.phone) {
         uni.showToast({
           title: '请选择配送地址',
-          icon: 'error'
+          icon: 'none'
         });
+        // 自动跳转到地址选择页面
+        setTimeout(() => {
+          this.changeAddress();
+        }, 1500);
         return;
       }
       
@@ -483,41 +572,100 @@ export default {
         }
       }
       
-      // 构建订单数据
+      // 构建规范的订单数据 - 只包含订单生成必需的字段
       const orderData = {
-        shopInfo: this.shopInfo,
-        cartItems: this.cartItems,
-        addressInfo: this.addressInfo,
-        deliveryOption: {
-          ...this.deliveryOptions[this.selectedDeliveryOption],
-          selectedDate: this.selectedDate,
-          selectedTime: this.selectedTime,
-          deliveryTime: this.deliveryTime
+        // 店铺基本信息
+        shopId: this.shopInfo.id,
+        shopName: this.shopInfo.name,
+        
+        // 订单商品列表
+        orderItems: Object.keys(this.cartItems).map(goodsKey => {
+          const quantity = this.cartItems[goodsKey];
+          const goods = this.goodsData[goodsKey];
+          return {
+            goodsId: goods.id,
+            goodsName: goods.name,
+            price: goods.price,
+            quantity: quantity,
+            specs: goods.specs || '',
+            image: goods.image,
+            subtotal: goods.price * quantity
+          };
+        }),
+        
+        // 配送地址信息
+        deliveryAddress: {
+          name: this.addressInfo.name,
+          phone: this.addressInfo.phone,
+          address: this.addressInfo.address,
+          latitude: this.addressInfo.latitude || 0,
+          longitude: this.addressInfo.longitude || 0
         },
-        coupon: this.selectedCoupon,
-        remark: this.remark,
-        totalAmount: this.finalTotal
+        
+        // 配送类型和时间
+        deliveryType: this.selectedDeliveryOption, // 0-立即送达，1-预约配送
+        deliveryTime: this.selectedDeliveryOption === 1 ? this.deliveryTime : null,
+        
+        // 费用信息
+        goodsAmount: this.cartTotal,
+        deliveryFee: this.shopInfo.deliveryFee || 0,
+        couponAmount: this.selectedCoupon ? this.selectedCoupon.amount : 0,
+        totalAmount: parseFloat(this.finalTotal),
+        
+        // 其他信息
+        remark: this.remark || '',
+        orderTime: new Date().toISOString()
       };
+      
+      // 打印规范的订单数据，方便调试和接口开发
+       console.log('=== 规范订单数据 ===');
+       console.log('完整订单数据:', JSON.stringify(orderData, null, 2));
+       console.log('店铺ID:', orderData.shopId);
+       console.log('店铺名称:', orderData.shopName);
+       console.log('订单商品列表:', orderData.orderItems);
+       console.log('配送地址:', orderData.deliveryAddress);
+       console.log('配送类型:', orderData.deliveryType, orderData.deliveryType === 0 ? '(立即送达)' : '(预约配送)');
+       console.log('配送时间:', orderData.deliveryTime);
+       console.log('商品金额:', orderData.goodsAmount);
+       console.log('配送费:', orderData.deliveryFee);
+       console.log('优惠券抵扣:', orderData.couponAmount);
+       console.log('订单总金额:', orderData.totalAmount);
+       console.log('订单备注:', orderData.remark);
+       console.log('下单时间:', orderData.orderTime);
+       console.log('==================');
       
       uni.showLoading({
         title: '提交中...'
       });
       
-      // 模拟提交订单
-      setTimeout(() => {
-        uni.hideLoading();
+      // 调用后端订单创建接口
+      try {
+        const response = await this.$http.post('api/order/create', orderData);
+        
+        // 订单创建成功
         uni.showToast({
           title: '订单创建成功',
           icon: 'success'
         });
         
-        // 跳转到支付页面
+        // 清空购物车
+        this.$store.commit('cart/clearCart');
+        
+        // 跳转到支付页面，传递订单信息
         setTimeout(() => {
           uni.navigateTo({
-            url: `/pages/payment/payment?orderData=${encodeURIComponent(JSON.stringify(orderData))}`
+            url: `/pages/payment/payment?orderId=${response.orderId}&orderNumber=${response.orderNumber}&totalAmount=${response.totalAmount}`
           });
-        }, 1500);
-      }, 2000);
+        }, 500);
+        
+      } catch (error) {
+        console.error('提交订单失败:', error);
+        uni.showToast({
+          title: error.errMsg || '订单创建失败，请重试',
+          icon: 'none',
+          duration: 3000
+        });
+      }
     }
   }
 }
@@ -640,6 +788,32 @@ export default {
       font-size: 14px;
       color: #666;
       line-height: 1.4;
+    }
+  }
+  
+  .no-address-card {
+    background: #f8f9fa;
+    border-radius: 12px;
+    padding: 20px;
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    border: 2px dashed #ddd;
+    
+    .no-address-icon {
+      font-size: 20px;
+      margin-right: 12px;
+    }
+    
+    .no-address-text {
+      flex: 1;
+      font-size: 16px;
+      color: #999;
+    }
+    
+    .no-address-arrow {
+      font-size: 16px;
+      color: #999;
     }
   }
 }

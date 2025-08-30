@@ -23,7 +23,7 @@
           <text class="label">姓名</text>
           <input 
             class="input" 
-            v-model="formData.name" 
+            v-model="formData.receiverName" 
             placeholder="请输入收货人姓名"
             maxlength="20"
           />
@@ -33,7 +33,7 @@
           <text class="label">手机号</text>
           <input 
             class="input" 
-            v-model="formData.phone" 
+            v-model="formData.receiverPhone" 
             placeholder="请输入手机号"
             type="number"
             maxlength="11"
@@ -59,7 +59,7 @@
           <text class="label">详细地址</text>
           <textarea 
             class="textarea" 
-            v-model="formData.address" 
+            v-model="formData.detailAddress" 
             placeholder="请输入详细地址，如道路、门牌号、小区、楼栋号、单元室等"
             maxlength="100"
           ></textarea>
@@ -146,18 +146,21 @@
 </template>
 
 <script>
+import $http from '@/config/requestConfig';
+
 export default {
   data() {
     return {
       isEdit: false,
       formData: {
         id: null,
-        name: '',
-        phone: '',
+        receiverName: '',
+        receiverPhone: '',
         province: '',
         city: '',
-        area: '',
+        district: '',
         address: '',
+        detailAddress: '',
         isDefault: false
       },
       showPicker: false,
@@ -182,8 +185,8 @@ export default {
   
   computed: {
     regionText() {
-      if (this.formData.province && this.formData.city && this.formData.area) {
-        return `${this.formData.province} ${this.formData.city} ${this.formData.area}`;
+      if (this.formData.province && this.formData.city && this.formData.district) {
+        return `${this.formData.province} ${this.formData.city} ${this.formData.district}`;
       }
       return '';
     }
@@ -192,23 +195,16 @@ export default {
   onLoad(options) {
     if (options.id) {
       this.isEdit = true;
-      this.formData.id = parseInt(options.id);
-      this.formData.name = decodeURIComponent(options.name || '');
-      this.formData.phone = options.phone || '';
+      this.formData.id = options.id;
+      this.formData.receiverName = decodeURIComponent(options.receiverName || '');
+      this.formData.receiverPhone = options.receiverPhone || '';
       this.formData.address = decodeURIComponent(options.address || '');
+      this.formData.detailAddress = decodeURIComponent(options.detailAddress || '');
+      this.formData.province = decodeURIComponent(options.province || '');
+      this.formData.city = decodeURIComponent(options.city || '');
+      this.formData.district = decodeURIComponent(options.district || '');
+
       this.formData.isDefault = options.isDefault === 'true';
-      
-      // 解析地址中的省市区信息（简化处理）
-      const address = this.formData.address;
-      if (address.includes('北京市')) {
-        this.formData.province = '北京市';
-        this.formData.city = '北京市';
-        if (address.includes('朝阳区')) {
-          this.formData.area = '朝阳区';
-        } else if (address.includes('海淀区')) {
-          this.formData.area = '海淀区';
-        }
-      }
     }
   },
   
@@ -257,7 +253,7 @@ export default {
       
       this.formData.province = this.provinces[provinceIndex]?.name || '';
       this.formData.city = this.cities[cityIndex]?.name || '';
-      this.formData.area = this.areas[areaIndex]?.name || '';
+      this.formData.district = this.areas[areaIndex]?.name || '';
       
       this.hidePicker();
     },
@@ -268,9 +264,9 @@ export default {
     },
     
     // 保存地址
-    saveAddress() {
+    async saveAddress() {
       // 表单验证
-      if (!this.formData.name.trim()) {
+      if (!this.formData.receiverName.trim()) {
         uni.showToast({
           title: '请输入收货人姓名',
           icon: 'none'
@@ -278,7 +274,7 @@ export default {
         return;
       }
       
-      if (!this.formData.phone.trim()) {
+      if (!this.formData.receiverPhone.trim()) {
         uni.showToast({
           title: '请输入手机号',
           icon: 'none'
@@ -288,7 +284,7 @@ export default {
       
       // 简单的手机号验证
       const phoneReg = /^1[3-9]\d{9}$/;
-      if (!phoneReg.test(this.formData.phone)) {
+      if (!phoneReg.test(this.formData.receiverPhone)) {
         uni.showToast({
           title: '请输入正确的手机号',
           icon: 'none'
@@ -296,7 +292,7 @@ export default {
         return;
       }
       
-      if (!this.formData.province || !this.formData.city || !this.formData.area) {
+      if (!this.formData.province || !this.formData.city || !this.formData.district) {
         uni.showToast({
           title: '请选择所在地区',
           icon: 'none'
@@ -304,7 +300,7 @@ export default {
         return;
       }
       
-      if (!this.formData.address.trim()) {
+      if (!this.formData.detailAddress.trim()) {
         uni.showToast({
           title: '请输入详细地址',
           icon: 'none'
@@ -313,35 +309,55 @@ export default {
       }
       
       // 构建完整地址
-      const fullAddress = `${this.formData.province}${this.formData.city}${this.formData.area}${this.formData.address}`;
+      const fullAddress = `${this.formData.province}${this.formData.city}${this.formData.district}`;
       
-      const addressData = {
-        id: this.formData.id || Date.now(),
-        name: this.formData.name,
-        phone: this.formData.phone,
-        address: fullAddress,
-        isDefault: this.formData.isDefault
-      };
-      
-      uni.showLoading({
-        title: '保存中...'
-      });
-      
-      // 模拟保存过程
-      setTimeout(() => {
+      try {
+        uni.showLoading({
+          title: this.isEdit ? '保存中...' : '添加中...'
+        });
+        
+        const requestData = {
+          receiverName: this.formData.receiverName,
+          receiverPhone: this.formData.receiverPhone,
+          address: fullAddress,
+          province: this.formData.province,
+          city: this.formData.city,
+          district: this.formData.district,
+          detailAddress: this.formData.detailAddress,
+          isDefault: this.formData.isDefault
+        };
+        
+        let response;
+        if (this.isEdit) {
+          // 编辑地址
+          requestData.addressId = this.formData.id;
+          response = await $http.post('api/user/address/edit', requestData);
+        } else {
+          // 添加地址
+          response = await $http.post('api/user/address/add', requestData);
+        }
+        
         uni.hideLoading();
+        // 请求成功，response直接是data数据
         uni.showToast({
-          title: '保存成功',
+          title: this.isEdit ? '保存成功' : '添加成功',
           icon: 'success'
         });
         
         // 触发地址更新事件
-        uni.$emit('addressUpdated', addressData);
+        uni.$emit('addressUpdated');
         
         setTimeout(() => {
           uni.navigateBack();
         }, 1500);
-      }, 1000);
+      } catch (error) {
+        uni.hideLoading();
+        console.error('保存地址失败:', error);
+        uni.showToast({
+          title: '网络错误，请重试',
+          icon: 'none'
+        });
+      }
     }
   }
 }

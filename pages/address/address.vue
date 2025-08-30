@@ -69,27 +69,15 @@
 </template>
 
 <script>
+import $http from '@/config/requestConfig';
+
 export default {
   data() {
     return {
-      addressList: [
-        {
-          id: 1,
-          name: '张三',
-          phone: '138****8888',
-          address: '北京市朝阳区某某大学宿舍楼A座101',
-          isDefault: true
-        },
-        {
-          id: 2,
-          name: '李四',
-          phone: '139****9999',
-          address: '北京市海淀区某某大学宿舍楼B座202',
-          isDefault: false
-        }
-      ],
+      addressList: [],
       isSelectMode: false, // 是否为选择模式
-      selectedAddressId: null
+      selectedAddressId: null,
+      loading: false
     }
   },
   
@@ -97,11 +85,39 @@ export default {
     // 检查是否为选择模式
     if (options.selectMode === 'true') {
       this.isSelectMode = true;
-      this.selectedAddressId = parseInt(options.selectedId) || null;
+      this.selectedAddressId = options.selectedId || null;
     }
+    // 获取地址列表
+    this.getAddressList();
   },
   
   methods: {
+    // 获取地址列表
+    async getAddressList() {
+      try {
+        this.loading = true;
+        const res = await $http.post('api/user/address/list');
+        if (res && Array.isArray(res)) {
+          this.addressList = res.map(item => ({
+            id: item._id,
+            name: item.receiverName,
+            phone: item.receiverPhone,
+            address: item.address + (item.detailAddress ? item.detailAddress : ''),
+            isDefault: item.isDefault,
+            originalData: item // 保存原始数据用于编辑
+          }));
+        }
+      } catch (error) {
+        console.error('获取地址列表失败:', error);
+        uni.showToast({
+          title: '获取地址列表失败',
+          icon: 'none'
+        });
+      } finally {
+        this.loading = false;
+      }
+    },
+    
     // 返回上一页
     goBack() {
       uni.navigateBack();
@@ -112,7 +128,7 @@ export default {
       if (this.isSelectMode) {
         this.selectedAddressId = address.id;
         // 返回选中的地址数据
-        uni.$emit('addressSelected', address);
+        uni.$emit('addressSelected', address.originalData || address);
         uni.navigateBack();
       }
     },
@@ -126,56 +142,90 @@ export default {
     
     // 编辑地址
     editAddress(address) {
-      uni.navigateTo({
-        url: `/pages/address/edit-address?id=${address.id}&name=${encodeURIComponent(address.name)}&phone=${address.phone}&address=${encodeURIComponent(address.address)}&isDefault=${address.isDefault}`
-      });
+      const originalData = address.originalData;
+      if (originalData) {
+        const params = {
+          id: originalData._id,
+          receiverName: originalData.receiverName,
+          receiverPhone: originalData.receiverPhone,
+          address: originalData.address,
+          detailAddress: originalData.detailAddress || '',
+          province: originalData.province || '',
+          city: originalData.city || '',
+          district: originalData.district || '',
+
+          isDefault: originalData.isDefault
+        };
+        
+        const query = Object.keys(params)
+          .map(key => `${key}=${encodeURIComponent(params[key] || '')}`)
+          .join('&');
+        
+        uni.navigateTo({
+          url: `/pages/address/edit-address?${query}`
+        });
+      }
     },
     
     // 删除地址
-    deleteAddress(addressId, index) {
+    async deleteAddress(addressId, index) {
       uni.showModal({
         title: '确认删除',
         content: '确定要删除这个地址吗？',
-        success: (res) => {
+        success: async (res) => {
           if (res.confirm) {
-            // 如果删除的是默认地址，需要设置新的默认地址
-            const deletedAddress = this.addressList[index];
-            this.addressList.splice(index, 1);
-            
-            if (deletedAddress.isDefault && this.addressList.length > 0) {
-              this.addressList[0].isDefault = true;
+            try {
+              await $http.post('api/user/address/delete', {
+                addressId: addressId
+              });
+              
+              uni.showToast({
+                title: '删除成功',
+                icon: 'success'
+              });
+              
+              // 重新获取地址列表
+              this.getAddressList();
+            } catch (error) {
+              console.error('删除地址失败:', error);
+              uni.showToast({
+                title: '删除失败',
+                icon: 'none'
+              });
             }
-            
-            uni.showToast({
-              title: '删除成功',
-              icon: 'success'
-            });
           }
         }
       });
     },
     
     // 设为默认地址
-    setDefault(addressId, index) {
-      // 取消其他地址的默认状态
-      this.addressList.forEach(address => {
-        address.isDefault = false;
-      });
-      
-      // 设置当前地址为默认
-      this.addressList[index].isDefault = true;
-      
-      uni.showToast({
-        title: '设置成功',
-        icon: 'success'
-      });
+    async setDefault(addressId, index) {
+      try {
+        await $http.post('api/user/address/set-default', {
+          addressId: addressId
+        });
+        
+        uni.showToast({
+          title: '设置成功',
+          icon: 'success'
+        });
+        
+        // 重新获取地址列表
+        this.getAddressList();
+      } catch (error) {
+        console.error('设置默认地址失败:', error);
+        uni.showToast({
+          title: '设置失败',
+          icon: 'none'
+        });
+      }
     }
   },
   
   // 监听页面显示，刷新地址列表
   onShow() {
-    // 这里可以重新获取地址列表
-    // this.getAddressList();
+    // 重新获取地址列表
+    this.getAddressList();
   }
 }
 </script>
