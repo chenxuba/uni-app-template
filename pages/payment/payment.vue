@@ -1,10 +1,10 @@
 <template>
-  <view class="payment-page">
+  <view class="payment-page" :class="{ 'has-payment-footer': !loading && !(countdownTime <= 0 && paymentExpired) }">
     <!-- 顶部导航栏 -->
     <view class="nav-bar">
       <view class="nav-left">
         <text class="back-btn" @click="goBack">←</text>
-      </view>
+      </view> 
       <view class="nav-center">
         <text class="nav-title">订单支付</text>
       </view>
@@ -23,6 +23,25 @@
       <view class="section-header">
         <text class="section-icon">📋</text>
         <text class="section-title">订单信息</text>
+      </view>
+      
+      <!-- 支付倒计时 -->
+      <view class="payment-countdown" v-if="countdownTime > 0">
+        <view class="countdown-header">
+          <text class="countdown-label">支付剩余时间</text>
+          <text class="countdown-time">{{ formatCountdown(countdownTime) }}</text>
+        </view>
+        <view class="countdown-bar">
+          <view class="countdown-progress" :style="{ width: countdownProgress + '%' }"></view>
+        </view>
+      </view>
+      
+      <!-- 支付超时提示 -->
+      <view class="payment-expired" v-if="countdownTime <= 0 && paymentExpired">
+        <view class="expired-content">
+          <text class="expired-icon">⚠️</text>
+          <text class="expired-text">支付已超时，订单已取消</text>
+        </view>
       </view>
       <view class="order-card">
         <view class="shop-info">
@@ -135,7 +154,7 @@
     </view>
 
     <!-- 底部支付按钮 -->
-    <view v-if="!loading" class="payment-footer">
+    <view v-if="!loading && !(countdownTime <= 0 && paymentExpired)" class="payment-footer">
       <view class="payment-info">
         <text class="payment-label">实付金额</text>
         <text class="payment-amount">￥{{ orderData.totalAmount }}</text>
@@ -194,7 +213,13 @@ export default {
         }
       ],
       paymentProcessing: false,
-      showGoodsList: false
+      showGoodsList: false,
+      // 倒计时相关
+      countdownTime: 0, // 剩余时间（秒）
+      totalCountdownTime: 900, // 总倒计时时间（15分钟 = 900秒）
+      countdownTimer: null, // 定时器
+      paymentExpired: false, // 是否已过期
+      paymentExpireTime: null // 支付过期时间
     };
   },
   
@@ -213,6 +238,12 @@ export default {
     
     deliveryFee() {
       return this.orderData.deliveryOption ? this.orderData.deliveryOption.fee || 0 : 3;
+    },
+    
+    // 倒计时进度百分比
+    countdownProgress() {
+      if (this.totalCountdownTime === 0) return 0;
+      return Math.max(0, (this.countdownTime / this.totalCountdownTime) * 100);
     }
   },
   
@@ -263,6 +294,13 @@ export default {
           };
           
           this.orderNumber = result.orderNumber || this.orderId;
+          
+          // 处理支付过期时间和倒计时
+          if (result.paymentExpireTime) {
+            this.paymentExpireTime = new Date(result.paymentExpireTime);
+            this.startCountdown();
+          }
+          
           this.loading = false;
         }
         
@@ -383,7 +421,85 @@ export default {
           icon: 'error'
         });
       }
+    },
+    
+    /**
+     * 启动支付倒计时
+     */
+    startCountdown() {
+      if (!this.paymentExpireTime) return;
+      
+      const now = new Date();
+      const expireTime = new Date(this.paymentExpireTime);
+      
+      // 计算剩余时间（秒）
+      const remainingTime = Math.max(0, Math.floor((expireTime - now) / 1000));
+      
+      if (remainingTime <= 0) {
+        this.paymentExpired = true;
+        this.countdownTime = 0;
+        this.showExpiredDialog();
+        return;
+      }
+      
+      this.countdownTime = remainingTime;
+      this.totalCountdownTime = remainingTime;
+      
+      // 启动定时器
+      this.countdownTimer = setInterval(() => {
+        this.countdownTime--;
+        
+        if (this.countdownTime <= 0) {
+          this.stopCountdown();
+          this.paymentExpired = true;
+          this.showExpiredDialog();
+        }
+      }, 1000);
+    },
+    
+    /**
+     * 停止倒计时
+     */
+    stopCountdown() {
+      if (this.countdownTimer) {
+        clearInterval(this.countdownTimer);
+        this.countdownTimer = null;
+      }
+    },
+    
+    /**
+     * 格式化倒计时显示
+     */
+    formatCountdown(seconds) {
+      const minutes = Math.floor(seconds / 60);
+      const remainingSeconds = seconds % 60;
+      return `${minutes.toString().padStart(2, '0')}:${remainingSeconds.toString().padStart(2, '0')}`;
+    },
+    
+    /**
+     * 显示支付超时对话框
+     */
+    showExpiredDialog() {
+      uni.showModal({
+        title: '支付超时',
+        content: '订单支付已超时，将自动取消订单',
+        showCancel: false,
+        confirmText: '确定',
+        success: () => {
+          // 跳转到订单列表页面
+          uni.redirectTo({
+            url: '/pages/order/order'
+          });
+        }
+      });
     }
+  },
+  
+  /**
+   * 页面卸载时清理定时器
+   */
+  beforeDestroy() {
+    this.stopCountdown();
   }
 }
 </script>
@@ -392,8 +508,12 @@ export default {
 .payment-page {
   min-height: 100vh;
   background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
-  padding-bottom: 120px;
+  padding-bottom: 20px;
   padding-top: 88px;
+  
+  &.has-payment-footer {
+    padding-bottom: 120px;
+  }
 }
 
 // 加载状态
@@ -458,6 +578,74 @@ export default {
   }
 }
 
+// 支付倒计时样式
+.payment-countdown {
+  margin: 16px;
+  background: white;
+  border: 1px solid #e3f2fd;
+  border-radius: 8px;
+  padding: 16px;
+  
+  .countdown-header {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    margin-bottom: 12px;
+    
+    .countdown-label {
+      color: #666;
+      font-size: 14px;
+    }
+    
+    .countdown-time {
+      color: #1976d2;
+      font-size: 16px;
+      font-weight: 500;
+      font-family: 'Courier New', monospace;
+    }
+  }
+  
+  .countdown-bar {
+    height: 4px;
+    background: #e3f2fd;
+    border-radius: 2px;
+    overflow: hidden;
+    
+    .countdown-progress {
+      height: 100%;
+      background: linear-gradient(90deg, #1976d2, #42a5f5);
+      border-radius: 2px;
+      transition: width 0.3s ease;
+    }
+  }
+}
+
+// 支付超时提示样式
+.payment-expired {
+  margin: 16px;
+  background: linear-gradient(135deg, #ffa726, #ff7043);
+  border-radius: 16px;
+  padding: 16px;
+  box-shadow: 0 4px 20px rgba(255, 167, 38, 0.3);
+  
+  .expired-content {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    
+    .expired-icon {
+      font-size: 18px;
+      margin-right: 8px;
+    }
+    
+    .expired-text {
+      color: white;
+      font-size: 14px;
+      font-weight: 500;
+    }
+  }
+}
+
 // 通用卡片样式
 .section-card {
   margin: 16px 16px 16px;
@@ -488,6 +676,7 @@ export default {
 // 订单信息
 .order-info-section {
   @extend .section-card;
+  margin-top: 24px;
 }
 
 .order-card {
