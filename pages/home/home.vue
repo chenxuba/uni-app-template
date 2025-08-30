@@ -77,6 +77,45 @@
 				</view>
 			</view>
 		</view>
+		<!-- 外卖店铺列表 -->
+		<view class="shop-container">
+			<view class="section-title">
+				<text class="title-text">外卖店铺</text>
+				<text class="title-more" @click="onMoreShops">更多 ></text>
+			</view>
+			<view class="shop-list">
+				<view class="shop-item" v-for="(shop, index) in shopList" :key="index" @click="onShopClick(shop)">
+					<view class="shop-image">
+						<image :src="shop.logo" mode="aspectFill"></image>
+					</view>
+					<view class="shop-info">
+						<view class="shop-header">
+							<view class="shop-name">{{ shop.shopName }}</view>
+							<!-- 推荐标记 -->
+							<view v-if="shop.isRecommended" class="recommend-badge">
+								<text class="recommend-text">推荐</text>
+							</view>
+						</view>
+						<view class="shop-desc">{{ shop.description }}</view>
+						<view class="shop-tags">
+							<text class="tag" v-for="tag in shop.tags" :key="tag">{{ tag }}</text>
+						</view>
+						<view class="shop-footer">
+							<view class="shop-rating">
+								<text class="rating-star">⭐</text>
+								<text class="rating-text">{{ shop.rating || '5.0' }}</text>
+								<text class="sales-text">月售{{ shop.sales || 0 }}</text>
+							</view>
+							<view class="delivery-info">
+								<text class="delivery-fee">配送费¥{{ shop.deliveryFee || 0 }}</text>
+								<text class="delivery-time">{{ shop.deliveryTime || 35 }}分钟 {{ shop.distanceKm !== null &&
+									shop.distanceKm !== undefined ? shop.distanceKm : '2.0' }}km</text>
+							</view>
+						</view>
+					</view>
+				</view>
+			</view>
+		</view>
 
 		<!-- 服务模块 -->
 		<view class="service-container">
@@ -135,44 +174,7 @@
 			</view>
 		</view>
 
-		<!-- 外卖店铺列表 -->
-		<view class="shop-container">
-			<view class="section-title">
-				<text class="title-text">外卖店铺</text>
-				<text class="title-more" @click="onMoreShops">更多 ></text>
-			</view>
-			<view class="shop-list">
-				<view class="shop-item" v-for="(shop, index) in shopList" :key="index" @click="onShopClick(shop)">
-					<view class="shop-image">
-						<image :src="shop.logo" mode="aspectFill"></image>
-					</view>
-					<view class="shop-info">
-						<view class="shop-header">
-							<view class="shop-name">{{ shop.shopName }}</view>
-							<!-- 推荐标记 -->
-							<view v-if="shop.isRecommended" class="recommend-badge">
-								<text class="recommend-text">推荐</text>
-							</view>
-						</view>
-						<view class="shop-desc">{{ shop.description }}</view>
-						<view class="shop-tags">
-							<text class="tag" v-for="tag in shop.tags" :key="tag">{{ tag }}</text>
-						</view>
-						<view class="shop-footer">
-							<view class="shop-rating">
-								<text class="rating-star">⭐</text>
-								<text class="rating-text">{{ shop.rating || '5.0' }}</text>
-								<text class="sales-text">月售{{ shop.sales || 0 }}</text>
-							</view>
-							<view class="delivery-info">
-								<text class="delivery-fee">配送费¥{{ shop.deliveryFee || 0 }}</text>
-								<text class="delivery-time">{{ shop.deliveryTime || 35 }}分钟 {{ shop.distanceKm !== null && shop.distanceKm !== undefined ? shop.distanceKm : '2.0' }}km</text>
-							</view>
-						</view>
-					</view>
-				</view>
-			</view>
-		</view>
+
 	</view>
 </template>
 
@@ -478,11 +480,11 @@ export default {
 		},
 		// 店铺点击
 		onShopClick(shop) {
-			uni.showToast({
-				title: `进入${shop.name}`,
-				icon: 'none'
+			// 跳转到店铺详情页
+			const shopId = shop._id || shop.id || '689f09afb4271c04d1c202d3'; // 使用正确的MongoDB ObjectId
+			uni.navigateTo({
+				url: `/pages/shopDetail/shopDetail?shopId=${shopId}&shopName=${encodeURIComponent(shop.shopName || shop.name || '')}`
 			});
-			// 这里可以跳转到店铺详情页
 		},
 		// 更多店铺
 		onMoreShops() {
@@ -1007,6 +1009,7 @@ export default {
 					margin-bottom: 10upx;
 					position: relative;
 					overflow: hidden;
+
 					.shop-name {
 						font-size: 32upx;
 						font-weight: bold;
@@ -1034,6 +1037,7 @@ export default {
 						box-shadow: 0 2upx 8upx rgba(255, 107, 53, 0.4);
 						transition: all 0.2s ease;
 						flex-shrink: 0;
+
 						.recommend-text {
 							line-height: 1;
 							text-shadow: 0 1upx 2upx rgba(0, 0, 0, 0.2);
@@ -1052,6 +1056,11 @@ export default {
 					font-size: 26upx;
 					color: #666;
 					margin-bottom: 15upx;
+					overflow: hidden;
+					text-overflow: ellipsis;
+					display: -webkit-box;
+					-webkit-line-clamp: 1;
+					-webkit-box-orient: vertical;
 				}
 
 				.shop-tags {
