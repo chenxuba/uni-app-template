@@ -97,8 +97,8 @@ export default {
       try {
         this.loading = true;
         const res = await $http.post('api/user/address/list');
-        if (res && Array.isArray(res)) {
-          this.addressList = res.map(item => ({
+        if (res.data && Array.isArray(res.data)) {
+          this.addressList = res.data.map(item => ({
             id: item._id,
             name: item.receiverName,
             phone: item.receiverPhone,

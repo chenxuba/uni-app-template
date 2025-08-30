@@ -313,8 +313,8 @@ export default {
 			}
 			try {
 				const res = await $http.get('api/shop/campus/byId', { isRecommended: true });
-				const list = Array.isArray(res?.shops) ? res.shops : [];
-				const campusLoc = res?.campus?.location || {};
+				const list = Array.isArray(res.data?.shops) ? res.data.shops : [];
+				const campusLoc = res.data?.campus?.location || {};
 				const campusLat = campusLoc.latitude;
 				const campusLng = campusLoc.longitude;
 				const withDistance = (list.length ? list : this.mockShopList).map(s => {
@@ -342,7 +342,7 @@ export default {
 		async fetchCampusList() {
 			try {
 				const res = await $http.get('api/campus');
-				this.campusList = Array.isArray(res) ? res : (res?.list || []);
+				this.campusList = Array.isArray(res.data) ? res.data : (res.data?.list || []);
 				const userInfo = getUserInfo() || {};
 				const currentDefaultId = userInfo.defaultCampus;
 				if (currentDefaultId && this.campusList.some(c => String(c._id) === String(currentDefaultId))) {
@@ -379,7 +379,7 @@ export default {
 				const updatedUserInfo = Object.assign({}, currentUserInfo, {
 					defaultCampus: this.selectedCampusId,
 					defaultCampusName: campusName,
-					token: (result && result.token) ? result.token : currentUserInfo.token
+					token: (result.data && result.data.token) ? result.data.token : currentUserInfo.token
 				});
 				this.$store.commit('setUserInfo', updatedUserInfo);
 				try { uni.setStorageSync('userInfo', updatedUserInfo); } catch (e) { }

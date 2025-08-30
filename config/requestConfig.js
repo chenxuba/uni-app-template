@@ -156,7 +156,7 @@ $http.dataFactory = async function(res) {
 		//判断数据是否请求成功
 		if (httpData.success || httpData.code == 200) {
 			// 返回正确的结果(then接受数据)
-			return Promise.resolve(httpData.data);
+			return Promise.resolve(httpData);
 		} else if (httpData.code == "1000" || httpData.code == "1001" || httpData.code == 1100 || httpData.code == 402) {
             
             // 失败重新请求（最多重新请求3次）

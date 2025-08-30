@@ -412,7 +412,7 @@
           });
           
           const response = await $http.get(`api/shop/${this.shopId}`);
-            const shopData = response;
+            const shopData = response.data;
             
             // 更新店铺信息
             this.shopInfo = {
@@ -463,7 +463,7 @@
           console.log(response);
           
             // 转换API数据格式为页面所需格式
-            this.categories = response.map((category, index) => {
+            this.categories = response.data.map((category, index) => {
               return {
                 id: category.categoryId, // 使用API返回的categoryId
                 name: category.categoryName,

@@ -35,10 +35,10 @@ export default {
 				this.setBindUserInfoShow(false);
 				this.$http.post("api/mine/v1/sync_wx_info", {
 					...res.userInfo
-				}).then(res => {
+				}).then(response => {
 					this.setUserInfo({
-						nickname: res.userInfo.nickName,
-						headImg: res.userInfo.avatarUrl,
+						nickname: response.data.userInfo.nickName,
+						headImg: response.data.userInfo.avatarUrl,
 					});
 				})
 			  }

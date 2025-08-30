@@ -127,7 +127,7 @@
     </view> -->
 
     <!-- 备注 -->
-    <view class="remark-section">
+    <view class="remark-section" @click.stop>
       <view class="section-header">
         <text class="section-icon">📝</text>
         <text class="section-title">备注</text>
@@ -137,6 +137,7 @@
         v-model="remark" 
         placeholder="请输入备注信息（选填）"
         maxlength="100"
+        @click.stop
       ></textarea>
     </view>
 
@@ -359,12 +360,12 @@ export default {
     async getDefaultAddress() {
       try {
         const res = await this.$http.post('api/user/address/default');
-        if (res && res._id) {
+        if (res.data && res.data._id) {
           this.addressInfo = {
-            id: res._id,
-            name: res.receiverName,
-            phone: res.receiverPhone,
-            address: (res.address || '') + (res.detailAddress || '')
+            id: res.data._id,
+            name: res.data.receiverName,
+            phone: res.data.receiverPhone,
+            address: (res.data.address || '') + (res.data.detailAddress || '')
           };
         } else {
           // 如果没有默认地址，保持原有的模拟数据或清空
@@ -654,7 +655,7 @@ export default {
         // 跳转到支付页面，传递订单信息
         setTimeout(() => {
           uni.navigateTo({
-            url: `/pages/payment/payment?orderId=${response.orderId}&orderNumber=${response.orderNumber}&totalAmount=${response.totalAmount}`
+            url: `/pages/payment/payment?orderId=${response.data.orderId}&orderNumber=${response.data.orderNumber}&totalAmount=${response.data.totalAmount}`
           });
         }, 500);
         
@@ -1136,6 +1137,7 @@ export default {
   display: flex;
   align-items: center;
   box-shadow: 0 -4px 20px rgba(0, 0, 0, 0.1);
+  z-index: 1001;
   
   .submit-info {
     flex: 1;

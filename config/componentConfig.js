@@ -41,21 +41,21 @@ export default {
 			 * | updateType	     | y	    | String	| forcibly = 强制更新, solicit = 弹窗确认更新, silent = 静默更新 |
 			 * | downloadUrl	 | y	    | String	| 版本下载链接（IOS安装包更新请放跳转store应用商店链接,安卓apk和wgt文件放文件下载链接）  |
 			 */
-			if (res && res.downloadUrl) {
+			if (res.data && res.data.downloadUrl) {
 				// 判断用户是不是从设置页面点击的更新，如果是设置页面点击的更新，无视接口给的更新类型，强制修改为弹窗确认更新
 				if(isPrompt){
-					res.updateType = "solicit";
+					res.data.updateType = "solicit";
 				}
 				// 兼容之前的版本（updateType是新版才有的参数）
-				if(res.updateType){
-					callback && callback(res);
+				if(res.data.updateType){
+					callback && callback(res.data);
 				} else {
-					if(res.forceUpdate){
-						res.updateType = "forcibly";
+					if(res.data.forceUpdate){
+						res.data.updateType = "forcibly";
 					} else {
-						res.updateType = "solicit";
+						res.data.updateType = "solicit";
 					}
-					callback && callback(res);
+					callback && callback(res.data);
 				}
 			} else if (isPrompt) {
 				uni.showToast({

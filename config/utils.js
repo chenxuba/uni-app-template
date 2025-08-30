@@ -103,7 +103,8 @@ export const setPay = function(payInfo, callback) {
 	}
 	$http.get(httpUrl, {
 		orderNo: payInfo.orderNo
-	}).then(data => {
+	}).then(response => {
+		const data = response.data;
 		let payData = {
 			success: function(res) {
 				callback && callback({

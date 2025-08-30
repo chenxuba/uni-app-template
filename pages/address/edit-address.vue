@@ -338,7 +338,7 @@ export default {
         }
         
         uni.hideLoading();
-        // 请求成功，response直接是data数据
+        // 请求成功，response现在是完整的httpData对象
         uni.showToast({
           title: this.isEdit ? '保存成功' : '添加成功',
           icon: 'success'

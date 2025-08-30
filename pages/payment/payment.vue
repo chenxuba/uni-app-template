@@ -49,6 +49,9 @@
           <view class="shop-details">
             <text class="shop-name">{{ orderData.shopInfo.name }}</text>
             <text class="order-number">订单号：{{ orderNumber }}</text>
+            <view class="order-status" v-if="paymentStatus === 'paid' || orderStatus === 'confirmed' || orderStatus === 'preparing' || orderStatus === 'delivering' || orderStatus === 'completed'">
+              <text class="status-text paid">✓ 已支付</text>
+            </view>
           </view>
         </view>
         <view class="goods-summary" @click="toggleGoodsList">
@@ -198,6 +201,8 @@ export default {
       },
       orderNumber: '',
       orderId: '', // 订单ID
+      orderStatus: '', // 订单状态
+      paymentStatus: '', // 支付状态
       loading: true, // 加载状态
       selectedPaymentMethod: 0,
       paymentMethods: [
@@ -277,27 +282,45 @@ export default {
           orderId: this.orderId
         });
         
-        if (result) {
+        if (result.data) {
+          // 检查订单状态和支付状态
+          if (result.data.paymentStatus === 'paid' || result.data.status === 'confirmed' || result.data.status === 'preparing' || result.data.status === 'delivering' || result.data.status === 'completed') {
+            uni.showModal({
+              title: '订单已支付',
+              content: '该订单已完成支付，无需重复支付',
+              showCancel: false,
+              confirmText: '查看订单',
+              success: () => {
+                uni.redirectTo({
+                  url: `/pages/orderDetail/orderDetail?orderNumber=${result.orderNumber || this.orderId}&status=paid`
+                });
+              }
+            });
+            return;
+          }
+          
           // 处理接口返回的数据
           this.orderData = {
             shopInfo: {
-              name: result.shopId?.shopName || result.shopName || '未知商家',
-              avatar: result.shopId?.logo || result.shopAvatar || 'https://gips0.baidu.com/it/u=2635637893,499839965&fm=3074&app=3074&f=JPEG'
+              name: result.data.shopId?.shopName || result.data.shopName || '未知商家',
+              avatar: result.data.shopId?.logo || result.data.shopAvatar || 'https://gips0.baidu.com/it/u=2635637893,499839965&fm=3074&app=3074&f=JPEG'
             },
-            cartItems: result.orderItems || [],
+            cartItems: result.data.orderItems || [],
             deliveryOption: {
-              name: result.deliveryType || '标准配送',
-              fee: result.deliveryFee || 3
+              name: result.data.deliveryType || '标准配送',
+              fee: result.data.deliveryFee || 3
             },
-            coupon: result.coupon || null,
-            totalAmount: result.totalAmount || 0
+            coupon: result.data.coupon || null,
+            totalAmount: result.data.totalAmount || 0
           };
           
-          this.orderNumber = result.orderNumber || this.orderId;
+          this.orderNumber = result.data.orderNumber || this.orderId;
+          this.orderStatus = result.data.status || result.data.orderStatus || 'pending';
+          this.paymentStatus = result.data.paymentStatus || 'unpaid';
           
           // 处理支付过期时间和倒计时
-          if (result.paymentExpireTime) {
-            this.paymentExpireTime = new Date(result.paymentExpireTime);
+          if (result.data.paymentExpireTime) {
+            this.paymentExpireTime = new Date(result.data.paymentExpireTime);
             this.startCountdown();
           }
           
@@ -384,42 +407,54 @@ export default {
         });
         
         // 调用支付接口
-        const paymentResult = await this.$http.post('/api/order/pay', {
+        const paymentMethodMap = {
+          '微信支付': 'wechat',
+          '余额支付': 'balance'
+        };
+        const paymentResult = await this.$http.post('api/order/pay', {
           orderId: this.orderId,
-          paymentMethod: this.paymentMethods[this.selectedPaymentMethod].name,
+          paymentMethod: paymentMethodMap[this.paymentMethods[this.selectedPaymentMethod].name],
           amount: this.orderData.totalAmount
         });
         
         uni.hideLoading();
         this.paymentProcessing = false;
-        
-        if (paymentResult && paymentResult.success) {
-          uni.showToast({
+        uni.showToast({
             title: '支付成功',
             icon: 'success'
           });
-          
           // 跳转到订单详情页面
           setTimeout(() => {
             uni.redirectTo({
               url: `/pages/orderDetail/orderDetail?orderNumber=${this.orderNumber}&status=paid`
             });
           }, 1500);
-        } else {
-          uni.showToast({
-            title: paymentResult.message || '支付失败，请重试',
-            icon: 'error'
-          });
-        }
+          
       } catch (error) {
         console.error('支付失败:', error);
         uni.hideLoading();
         this.paymentProcessing = false;
         
-        uni.showToast({
-          title: '支付失败，请重试',
-          icon: 'error'
-        });
+        // 检查错误信息中是否包含订单已支付的提示
+        const errorMessage = error.message || error.toString();
+        if (errorMessage.includes('已支付') || errorMessage.includes('已完成支付') || errorMessage.includes('已确认') || errorMessage.includes('不允许支付')) {
+          uni.showModal({
+            title: '订单已支付',
+            content: '该订单已完成支付，无需重复支付',
+            showCancel: false,
+            confirmText: '查看订单',
+            success: () => {
+              uni.redirectTo({
+                url: `/pages/orderDetail/orderDetail?orderNumber=${this.orderNumber}&status=paid`
+              });
+            }
+          });
+        } else {
+          uni.showToast({
+            title: '支付失败，请重试',
+            icon: 'error'
+          });
+        }
       }
     },
     
@@ -706,6 +741,22 @@ export default {
       .order-number {
         font-size: 12px;
         color: #999;
+      }
+      
+      .order-status {
+        margin-top: 4px;
+        
+        .status-text {
+          font-size: 12px;
+          padding: 2px 8px;
+          border-radius: 10px;
+          
+          &.paid {
+            color: #4caf50;
+            background: rgba(76, 175, 80, 0.1);
+            border: 1px solid rgba(76, 175, 80, 0.3);
+          }
+        }
       }
     }
   }
